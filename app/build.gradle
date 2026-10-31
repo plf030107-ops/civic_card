@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'hk.eta.civiccard'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "hk.eta.civiccard"
+        minSdk 29
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // 不打签名的话 release 直接输出未签名 apk
+    signingConfigs {
+        // 如需签名在 CI 里注入
+    }
+}
+
+dependencies {
+    // Xposed API：compileOnly，运行时由 LSPosed 提供
+    compileOnly 'de.robv.android.xposed:api:82'
+}

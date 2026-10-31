@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="hk.eta.civiccard">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 背屏卡片权限，REAREye 用它识别可用的卡片应用 -->
+    <uses-permission android:name="hk.uwu.reareye.permission.ACCESS_REAR_WIDGET_API" />
+
+    <queries>
+        <package android:name="hk.uwu.reareye" />
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher"
+        android:label="乘趣背屏卡片"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+
+        <!-- 自检/配置页 -->
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:exported="true"
+            android:label="乘趣背屏卡片">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 卡片本体，供 REAREye 拉起 -->
+        <activity
+            android:name=".ui.CardActivity"
+            android:exported="true"
+            android:label="乘趣控车"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            android:resizeableActivity="true">
+            <intent-filter>
+                <action android:name="hk.eta.civiccard.CARD" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Xposed 模块声明 -->
+        <meta-data
+            android:name="xposedmodule"
+            android:value="true" />
+        <meta-data
+            android:name="xposeddescription"
+            android:value="把乘趣车控投射到小米背屏，不改动乘趣本体" />
+        <meta-data
+            android:name="xposedminversion"
+            android:value="93" />
+        <meta-data
+            android:name="xposedsharedprefs"
+            android:value="true" />
+
+        <!-- REAREye 卡片清单（供其扫描） -->
+        <meta-data
+            android:name="reareye.widget.id"
+            android:value="hk.eta.civiccard.main" />
+        <meta-data
+            android:name="reareye.widget.name"
+            android:value="乘趣控车" />
+        <meta-data
+            android:name="reareye.widget.title"
+            android:value="十代思域" />
+        <meta-data
+            android:name="reareye.widget.activity"
+            android:value="hk.eta.civiccard.ui.CardActivity" />
+
+    </application>
+</manifest>
