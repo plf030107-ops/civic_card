@@ -53,6 +53,7 @@ public class HookEntry implements IXposedHookLoadPackage {
             BeanStatusReader.install(lpparam.classLoader);
             ConditionReader.install(lpparam.classLoader);
             CredDumper.install(lpparam.classLoader);
+            NetSniffer.install(lpparam.classLoader);
             // NetSniffer.install(lpparam.classLoader);  // 已定位，关闭避免刷屏
 
             try {
