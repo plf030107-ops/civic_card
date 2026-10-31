@@ -131,7 +131,7 @@ public class CardActivity extends Activity {
         tvLockIcon.setText("🚗");
         tvLockState.setText("暂无车况");
         tvLockState.setTextColor(getColor(R.color.text_muted));
-        tvLockState.setTextSize(28f);
+        tvLockState.setTextSize(26f);
         setUnknown(tvFLStat);
         setUnknown(tvFRStat);
         setUnknown(tvRLStat);
@@ -147,7 +147,7 @@ public class CardActivity extends Activity {
     }
 
     private void renderLock(VehicleStatus st) {
-        tvLockState.setTextSize(28f);
+        tvLockState.setTextSize(26f);
         boolean locked = st.doorsLocked();
         tvLockState.setText(locked ? "已锁车" : "未锁车");
         tvLockState.setTextColor(getColor(locked ? R.color.ok : R.color.warn));
