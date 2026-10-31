@@ -3,7 +3,6 @@ package hk.eta.civiccard.hook;
 import android.content.Context;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -12,16 +11,20 @@ import de.robv.android.xposed.XposedBridge;
 /**
  * 跨进程数据落盘。
  *
- * 直接覆盖写，不做 tmp+rename：
- * 实测 rename 在并发写同一文件时会失败，且失败日志会刷爆 LSPosed 日志。
+ * 【关键】写入卡片自己的私有目录 /data/data/hk.eta.civiccard/files：
+ *   - 该目录上下文是 app_data_file，卡片进程天然可读
+ *   - 乘趣进程无权限直接写，所以通过 su 写
  *
- * 卡片侧读取时容忍半截内容（JSON 解析失败就跳过），所以不需要原子性。
+ * 之前用 /data/local/tmp 失败，是因为那里的文件带 SELinux categories，
+ * 两个不同 UID 的应用互相读不到（即使 chmod 666 也不行）。
  */
 final class StatusStore {
 
     private static final String TAG = "CivicCard";
 
-    static final String DIR      = "/data/local/tmp/civic_card";
+    /** 卡片私有目录 */
+    static final String DIR = "/data/data/hk.eta.civiccard/files/bridge";
+
     static final String F_STATUS = DIR + "/status.json";
     static final String F_CMD    = DIR + "/last_cmd.txt";
     static final String F_RESULT = DIR + "/last_result.txt";
@@ -33,69 +36,66 @@ final class StatusStore {
     private StatusStore() {}
 
     static void writeStatus(Context ctx, String json) {
-        write(F_STATUS, json);
+        write(F_STATUS, json, false);
     }
 
+    /** 指令通道需要卡片可写，权限放宽到 666 */
     static void writeCommand(Context ctx, String desc, long ts) {
-        write(F_CMD, ts + "\t" + desc);
+        write(F_CMD, ts + "\t" + desc, true);
     }
 
     static void writeCommandResult(Context ctx, boolean ok, String detail, long ts) {
-        write(F_RESULT, ts + "\t" + (ok ? "OK" : "FAIL") + "\t" + detail);
+        write(F_RESULT, ts + "\t" + (ok ? "OK" : "FAIL") + "\t" + detail, true);
     }
 
     static void writeBridgeReady(Context ctx, boolean ready) {
-        if (ready) write(F_READY, String.valueOf(System.currentTimeMillis()));
+        if (ready) write(F_READY, String.valueOf(System.currentTimeMillis()), true);
     }
 
     static void writeVin(Context ctx, String vin) {
-        write(F_VIN, vin);
+        write(F_VIN, vin, false);
     }
 
-    /** 云端原始字符串，按类型分文件存 */
     static void writeRawCloud(Context ctx, String kind, String json) {
-        write(DIR + "/cloud_" + kind + ".json", json);
+        write(DIR + "/cloud_" + kind + ".json", json, false);
     }
 
-    /** 任意文件写入 */
     static void writeFile(String name, String content) {
-        write(DIR + "/" + name, content);
+        write(DIR + "/" + name, content, false);
     }
 
-    private static void write(String path, String content) {
-        FileOutputStream fos = null;
+    /**
+     * 通过 su 写入卡片目录。
+     *
+     * @param worldWritable true 时 chmod 666，供卡片读写（指令通道）
+     */
+    private static void write(String path, String content, boolean worldWritable) {
+        Process p = null;
         try {
-            File dir = new File(DIR);
-            if (!dir.exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                dir.mkdirs();
-            }
-            fos = new FileOutputStream(path, false);
-            fos.write(content.getBytes(StandardCharsets.UTF_8));
-            fos.flush();
-            fos.close();
-            fos = null;
-
-            // SELinux 上下文必须去掉 categories，
-            // 否则卡片进程（不同 c 标签）无权读取。
-            // 用 Runtime 调 chcon，失败只记录一次。
-            try {
-                Runtime.getRuntime().exec(new String[]{
-                        "/system/bin/chcon",
-                        "u:object_r:app_data_file:s0",
-                        path
-                }).waitFor();
-            } catch (Throwable ignored) { }
+            p = Runtime.getRuntime().exec("su");
+            java.io.OutputStream os = p.getOutputStream();
+            StringBuilder sb = new StringBuilder();
+            sb.append("mkdir -p ").append(DIR).append("\n");
+            sb.append("chmod 777 ").append(DIR).append("\n");
+            // 用 heredoc 避免内容里的特殊字符出问题
+            sb.append("cat > '").append(path).append("' <<'ETAEOF'\n");
+            sb.append(content).append("\nETAEOF\n");
+            sb.append("chmod ").append(worldWritable ? "666" : "644")
+              .append(" '").append(path).append("'\n");
+            sb.append("exit\n");
+            os.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+            os.flush();
+            os.close();
+            p.waitFor();
         } catch (Throwable t) {
-            // 限流：同一分钟内只报一次，避免刷屏
             long now = System.currentTimeMillis();
             if (now - sLastErr > 60000) {
                 sLastErr = now;
                 XposedBridge.log(TAG + " write fail " + path + " : " + t);
             }
         } finally {
-            if (fos != null) {
-                try { fos.close(); } catch (IOException ignored) { }
+            if (p != null) {
+                try { p.destroy(); } catch (Throwable ignored) { }
             }
         }
     }
