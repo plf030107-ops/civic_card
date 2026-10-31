@@ -82,16 +82,19 @@ final class StatusSniffer {
             boolean changed = !sig.equals(sLastSig);
             sLastSig = sig;
 
-            if (changed) {
-                String json = hk.eta.civiccard.logic.StatusJson.fromPState(r);
-                if (json != null) StatusStore.writeStatus(null, json);
+            // 每次都写，避免"值未变化时不落盘"导致文件缺失
+            String json = hk.eta.civiccard.logic.StatusJson.fromPState(r);
+            boolean wrote = false;
+            if (json != null) {
+                wrote = StatusStore.writeStatus(null, json);
             }
             XposedBridge.log("CivicCard STATUS #" + sHit
                     + " v=" + r.voltage
                     + " total=" + r.totalMileage
                     + " remain=" + r.remainMileage
                     + " st=" + r.statusByte
-                    + (changed ? " CHANGED" : ""));
+                    + (changed ? " CHANGED" : "")
+                    + (wrote ? " W" : " WRITEFAIL"));
         } catch (Throwable t) {
             XposedBridge.log("CivicCard STATUS fail: " + t);
         }
