@@ -10,9 +10,9 @@ import java.nio.charset.StandardCharsets;
 /**
  * 卡片侧读取桥数据。
  *
- * /data/local/tmp/civic_card 是乘趣进程（u0_a378）写入的，
- * 卡片进程 UID 不同，直接读可能被拒。优先走 root cat，
- * 失败再退回普通 File 读。
+ * 【关键】乘趣进程写出的文件带 SELinux categories（如 c122,c257,...），
+ * 卡片进程的 categories 不同（c152,...），直接读会被拒绝。
+ * 因此统一走 root（cards 有 su 权限）读取，这是唯一可靠路径。
  */
 public final class BridgeReader {
 
@@ -23,25 +23,21 @@ public final class BridgeReader {
 
     private BridgeReader() {}
 
-    /** 桥是否就绪（乘趣进程 hook 加载成功） */
     public static boolean isReady() {
         String s = readAll(F_READY);
         return s != null && !s.isEmpty();
     }
 
-    /** 读车况，读不到返回 null */
     public static VehicleStatus readStatus() {
         String json = readAll(F_STATUS);
         if (json == null || json.isEmpty()) return null;
         return StatusJson.fromJson(json);
     }
 
-    /** 最近一次指令结果原始行 */
     public static String readLastResult() {
         return readAll(F_RESULT);
     }
 
-    /** 车况最后更新时间，Long.MAX_VALUE 表示没有 */
     public static long statusAgeMs() {
         String s = shell("stat -c %Y " + F_STATUS);
         if (s == null) return Long.MAX_VALUE;
@@ -54,14 +50,13 @@ public final class BridgeReader {
         }
     }
 
-    // ------------------------------------------------------------ 读取实现
+    // ------------------------------------------------------------ 读取
 
+    /** 优先 root，失败退回直读 */
     private static String readAll(String path) {
-        // 先生成普通读
-        String s = readDirect(path);
+        String s = shell("cat " + path);
         if (s != null && !s.isEmpty()) return s;
-        // 退回 root
-        return shell("cat " + path);
+        return readDirect(path);
     }
 
     private static String readDirect(String path) {
@@ -81,7 +76,6 @@ public final class BridgeReader {
         }
     }
 
-    /** 以 root 执行一条 shell 命令并取 stdout */
     private static String shell(String cmd) {
         Process p = null;
         BufferedReader br = null;
