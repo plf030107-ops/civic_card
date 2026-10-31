@@ -49,6 +49,7 @@ public class HookEntry implements IXposedHookLoadPackage {
             hookApplication(lpparam);
             hookSendVehicleCommandVerbose(lpparam);
             StatusHooks.install(lpparam.classLoader);
+            StatusProbe.install(lpparam.classLoader);
 
             try {
                 new CommandWatcher(lpparam.classLoader).start();
