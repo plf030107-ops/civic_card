@@ -57,6 +57,11 @@ final class StatusStore {
         write(DIR + "/cloud_" + kind + ".json", json);
     }
 
+    /** 任意文件写入 */
+    static void writeFile(String name, String content) {
+        write(DIR + "/" + name, content);
+    }
+
     private static void write(String path, String content) {
         FileOutputStream fos = null;
         try {
