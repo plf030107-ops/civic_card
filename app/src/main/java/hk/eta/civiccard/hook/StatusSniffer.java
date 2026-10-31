@@ -83,7 +83,8 @@ final class StatusSniffer {
             sLastSig = sig;
 
             if (changed) {
-                StatusStore.writeStatus(null, PStateDecoder.toStatusJson(r));
+                String json = hk.eta.civiccard.logic.StatusJson.fromPState(r);
+                if (json != null) StatusStore.writeStatus(null, json);
             }
             XposedBridge.log("CivicCard STATUS #" + sHit
                     + " v=" + r.voltage
