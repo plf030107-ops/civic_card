@@ -12,11 +12,10 @@ import de.robv.android.xposed.XposedBridge;
 /**
  * 跨进程数据落盘。
  *
- * 通道：/data/local/tmp/civic_card/  （777，乘趣和卡片都能访问）
+ * 直接覆盖写，不做 tmp+rename：
+ * 实测 rename 在并发写同一文件时会失败，且失败日志会刷爆 LSPosed 日志。
  *
- * 注意：本类跑在乘趣进程（u0_a378），非 root。
- * setReadable/setWritable 在非 owner 时会抛 SecurityException，
- * 所以每一步都单独 try，失败只记日志不中断。
+ * 卡片侧读取时容忍半截内容（JSON 解析失败就跳过），所以不需要原子性。
  */
 final class StatusStore {
 
@@ -28,6 +27,8 @@ final class StatusStore {
     static final String F_RESULT = DIR + "/last_result.txt";
     static final String F_READY  = DIR + "/bridge_ready";
     static final String F_VIN    = DIR + "/vin.txt";
+
+    private static long sLastErr = 0;
 
     private StatusStore() {}
 
@@ -51,66 +52,33 @@ final class StatusStore {
         write(F_VIN, vin);
     }
 
-    /** 云端原始字符串，按类型分文件存，用于定位哪个字段是真实数值 */
+    /** 云端原始字符串，按类型分文件存 */
     static void writeRawCloud(Context ctx, String kind, String json) {
         write(DIR + "/cloud_" + kind + ".json", json);
     }
 
     private static void write(String path, String content) {
-        try {
-            ensureDir();
-        } catch (Throwable t) {
-            log("ensureDir fail: " + t);
-        }
-
         FileOutputStream fos = null;
         try {
-            File tmp = new File(path + ".tmp");
-            fos = new FileOutputStream(tmp);
+            File dir = new File(DIR);
+            if (!dir.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                dir.mkdirs();
+            }
+            fos = new FileOutputStream(path, false);
             fos.write(content.getBytes(StandardCharsets.UTF_8));
             fos.flush();
-            fos.getFD().sync();
-            fos.close();
-            fos = null;
-
-            File dst = new File(path);
-            if (dst.exists() && !dst.delete()) {
-                log("delete old fail: " + path);
-            }
-            if (!tmp.renameTo(dst)) {
-                log("rename fail: " + path);
-                // 退一步：直接覆盖写
-                FileOutputStream d = new FileOutputStream(dst);
-                d.write(content.getBytes(StandardCharsets.UTF_8));
-                d.flush();
-                d.close();
-            }
-
-            // 单独尝试放宽权限，失败无妨（同 UID 可读）
-            try { dst.setReadable(true, false); } catch (Throwable ignored) { }
-            try { dst.setWritable(true, false); } catch (Throwable ignored) { }
         } catch (Throwable t) {
-            log("write fail " + path + " : " + t);
+            // 限流：同一分钟内只报一次，避免刷屏
+            long now = System.currentTimeMillis();
+            if (now - sLastErr > 60000) {
+                sLastErr = now;
+                XposedBridge.log(TAG + " write fail " + path + " : " + t);
+            }
         } finally {
             if (fos != null) {
                 try { fos.close(); } catch (IOException ignored) { }
             }
         }
-    }
-
-    private static void ensureDir() {
-        File dir = new File(DIR);
-        if (!dir.exists()) {
-            if (dir.mkdirs()) {
-                log("mkdir " + DIR);
-            }
-        }
-        if (!dir.canWrite()) {
-            log("dir not writable: " + DIR);
-        }
-    }
-
-    private static void log(String s) {
-        XposedBridge.log(TAG + " " + s);
     }
 }
