@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
  */
 public final class BridgeReader {
 
-    private static final String DIR = "/data/local/tmp/civic_card";
+    private static final String DIR = "/data/data/hk.eta.civiccard/files/bridge";
     private static final String F_STATUS = DIR + "/status.json";
     private static final String F_RESULT = DIR + "/last_result.txt";
     private static final String F_READY  = DIR + "/bridge_ready";
