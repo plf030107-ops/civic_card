@@ -41,14 +41,13 @@ final class NetSniffer {
                     Object ret = param.getResult();
                     if (!(ret instanceof String)) return;
                     String s = (String) ret;
-                    if (s.length() < 50) return;
-                    if (!looksLikeStatus(s)) return;
+                    if (s.length() < 30) return;
                     sHit++;
-                    StatusStore.writeRawCloud(null, "net_" + (sHit % 5), s);
-                    long now = System.currentTimeMillis();
-                    if (now - sLastLog > 5000) {
-                        sLastLog = now;
-                        XposedBridge.log("CivicCardSniff hit#" + sHit + " len=" + s.length());
+                    // 不过滤，全部留档，便于事后定位车况接口
+                    StatusStore.writeRawCloud(null, "all_" + (sHit % 20), s);
+                    if (looksLikeStatus(s)) {
+                        StatusStore.writeRawCloud(null, "hit_" + (sHit % 10), s);
+                        XposedBridge.log("CivicCardSniff HIT#" + sHit + " len=" + s.length());
                     }
                 }
             });
