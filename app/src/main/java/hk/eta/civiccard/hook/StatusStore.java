@@ -12,15 +12,10 @@ import de.robv.android.xposed.XposedBridge;
 /**
  * 跨进程数据落盘。
  *
- * 【为什么直接写，不走 su】
- * 实测乘趣进程虽然进了 KernelSU 白名单，但 hook 里 Runtime.exec("su")
- * 仍被拒绝（进程未以交互身份启动）。而目标目录权限是 777、
- * 上下文 app_data_file，直写就能成功。
- *
- * 【为什么写卡片的私有目录】
- * /data/local/tmp 下的文件带 SELinux categories（c122 vs c152），
- * 两个不同 UID 的应用即使 chmod 666 也互不相通。
- * 卡片自己的 files/bridge 是双方唯一都可达的位置。
+ * 写卡片的私有目录 /data/data/hk.eta.civiccard/files/bridge：
+ *   - 卡片进程天然可读
+ *   - 乘趣进程需要该路径的父目录有 x 权限且 SELinux 无 categories 限制
+ *     （已在部署脚本里处理：chmod 711 父目录 + chcon 去 categories）
  */
 final class StatusStore {
 
@@ -38,35 +33,35 @@ final class StatusStore {
 
     private StatusStore() {}
 
-    static void writeStatus(Context ctx, String json) {
-        write(F_STATUS, json, false);
+    static boolean writeStatus(Context ctx, String json) {
+        return write(F_STATUS, json);
     }
 
     static void writeCommand(Context ctx, String desc, long ts) {
-        write(F_CMD, ts + "\t" + desc, true);
+        write(F_CMD, ts + "\t" + desc);
     }
 
     static void writeCommandResult(Context ctx, boolean ok, String detail, long ts) {
-        write(F_RESULT, ts + "\t" + (ok ? "OK" : "FAIL") + "\t" + detail, true);
+        write(F_RESULT, ts + "\t" + (ok ? "OK" : "FAIL") + "\t" + detail);
     }
 
     static void writeBridgeReady(Context ctx, boolean ready) {
-        if (ready) write(F_READY, String.valueOf(System.currentTimeMillis()), true);
+        if (ready) write(F_READY, String.valueOf(System.currentTimeMillis()));
     }
 
     static void writeVin(Context ctx, String vin) {
-        write(F_VIN, vin, false);
+        write(F_VIN, vin);
     }
 
     static void writeRawCloud(Context ctx, String kind, String json) {
-        write(DIR + "/cloud_" + kind + ".json", json, false);
+        write(DIR + "/cloud_" + kind + ".json", json);
     }
 
     static void writeFile(String name, String content) {
-        write(DIR + "/" + name, content, false);
+        write(DIR + "/" + name, content);
     }
 
-    private static void write(String path, String content, boolean worldWritable) {
+    private static boolean write(String path, String content) {
         FileOutputStream fos = null;
         try {
             File dir = new File(DIR);
@@ -77,12 +72,14 @@ final class StatusStore {
             fos = new FileOutputStream(path, false);
             fos.write(content.getBytes(StandardCharsets.UTF_8));
             fos.flush();
+            return true;
         } catch (Throwable t) {
             long now = System.currentTimeMillis();
             if (now - sLastErr > 30000) {
                 sLastErr = now;
                 XposedBridge.log(TAG + " write fail " + path + " : " + t);
             }
+            return false;
         } finally {
             if (fos != null) {
                 try { fos.close(); } catch (IOException ignored) { }
