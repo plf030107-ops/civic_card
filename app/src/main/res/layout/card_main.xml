@@ -277,48 +277,36 @@
             android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
-            <TextView
+            <include
                 android:id="@+id/btnUnlock"
+                layout="@layout/item_btn"
                 android:layout_width="0dp"
-                android:layout_height="@dimen/btn_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_btn"
-                android:gravity="center"
-                android:text="🔓"
-                android:textSize="22sp" />
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
 
-            <TextView
+            <include
                 android:id="@+id/btnLock"
+                layout="@layout/item_btn"
                 android:layout_width="0dp"
-                android:layout_height="@dimen/btn_size"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/btn_gap"
-                android:background="@drawable/bg_btn"
-                android:gravity="center"
-                android:text="🔒"
-                android:textSize="22sp" />
+                android:layout_weight="1" />
 
-            <TextView
+            <include
                 android:id="@+id/btnTrunk"
+                layout="@layout/item_btn"
                 android:layout_width="0dp"
-                android:layout_height="@dimen/btn_size"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/btn_gap"
-                android:background="@drawable/bg_btn"
-                android:gravity="center"
-                android:text="🧳"
-                android:textSize="22sp" />
+                android:layout_weight="1" />
 
-            <TextView
+            <include
                 android:id="@+id/btnFind"
+                layout="@layout/item_btn"
                 android:layout_width="0dp"
-                android:layout_height="@dimen/btn_size"
-                android:layout_weight="1"
+                android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/btn_gap"
-                android:background="@drawable/bg_btn"
-                android:gravity="center"
-                android:text="📍"
-                android:textSize="22sp" />
+                android:layout_weight="1" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
