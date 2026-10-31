@@ -3,10 +3,23 @@ package hk.eta.civiccard.logic;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/** VehicleStatus <-> JSON，卡片侧直接读。 */
+import java.util.Locale;
+
+/**
+ * 车况 JSON 序列化 / 反序列化。
+ *
+ * 两种输出：
+ *   toJson()      全字段，用于 BLE 帧解析出的完整对象
+ *   fromPState()  只输出确实拿到的字段，用于云端 pstateData（部分字段）
+ *
+ * 反序列化时缺失字段保持 0，因此卡片侧必须靠「字段是否存在」判断，
+ * 不能把 0 当成「关闭/未锁」。
+ */
 public final class StatusJson {
 
     private StatusJson() {}
+
+    // ------------------------------------------------------------ 全量
 
     public static String toJson(VehicleStatus s) {
         JSONObject o = new JSONObject();
@@ -45,10 +58,6 @@ public final class StatusJson {
             o.put("vehicleMode", s.vehicleMode);
             o.put("remoteMode", s.remoteMode);
             o.put("burglarAlarm", s.burglarAlarm);
-            o.put("doorsClosed", s.doorsClosed());
-            o.put("doorsLocked", s.doorsLocked());
-            o.put("trunkClosed", s.trunkClosed());
-            o.put("windowsClosed", s.windowsClosed());
         } catch (JSONException ignored) { }
         return o.toString();
     }
@@ -59,6 +68,18 @@ public final class StatusJson {
             JSONObject o = new JSONObject(json);
             VehicleStatus s = new VehicleStatus();
             s.timestampMs = o.optLong("ts", 0);
+
+            // 逐字段判存在，避免把缺失当 0
+            s.hasDoorLock = o.has("frontLeftLock");
+            s.hasDoor = o.has("frontLeftDoor");
+            s.hasWindow = o.has("frontLeftWindow");
+            s.hasTrunk = o.has("trunk");
+            s.hasVoltage = o.has("voltage");
+            s.hasTotalMileage = o.has("totalMileage");
+            s.hasRemainMileage = o.has("continuationMileage");
+            s.hasBattery = o.has("batteryPercentage");
+            s.hasTempInside = o.has("temperatureInside");
+
             s.frontLeftDoor  = o.optInt("frontLeftDoor");
             s.frontRightDoor = o.optInt("frontRightDoor");
             s.rearLeftDoor   = o.optInt("rearLeftDoor");
@@ -96,5 +117,28 @@ public final class StatusJson {
         } catch (JSONException e) {
             return null;
         }
+    }
+
+    // ------------------------------------------------------------ 最小可信
+
+    /**
+     * 只输出确实解析到的字段，缺失的不出现。
+     * 卡片据此区分「未知」和「已知为 0」。
+     */
+    public static String fromPState(PStateDecoder.Result r) {
+        if (r == null || !r.valid) return null;
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\"ts\":").append(System.currentTimeMillis());
+        if (r.voltage >= 0) {
+            sb.append(",\"voltage\":").append(String.format(Locale.US, "%.1f", r.voltage));
+        }
+        if (r.totalMileage >= 0) {
+            sb.append(",\"totalMileage\":").append(r.totalMileage);
+        }
+        if (r.remainMileage >= 0) {
+            sb.append(",\"continuationMileage\":").append(r.remainMileage);
+        }
+        sb.append('}');
+        return sb.toString();
     }
 }
