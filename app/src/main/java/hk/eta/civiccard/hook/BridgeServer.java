@@ -118,6 +118,26 @@ public final class BridgeServer {
                 System.currentTimeMillis());
     }
 
+    /**
+     * 来自 VehicleConditionInfo 的车况（字段名与 StatusJson 一致，直接透传）。
+     */
+    void onConditionInfo(String json) {
+        try {
+            VehicleStatus st = StatusJson.fromJson(json);
+            if (st != null) {
+                st.timestampMs = System.currentTimeMillis();
+                String normalized = StatusJson.toJson(st);
+                mLastStatusJson = normalized;
+                StatusStore.writeStatus(mCtx, normalized);
+            } else {
+                mLastStatusJson = json;
+                StatusStore.writeStatus(mCtx, json);
+            }
+        } catch (Throwable t) {
+            HookEntry.log("bridge: cond fail " + t);
+        }
+    }
+
     // ------------------------------------------------------------ 读接口
 
     public String vin() { return mVin; }
