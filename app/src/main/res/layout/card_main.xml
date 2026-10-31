@@ -342,7 +342,8 @@
                 android:maxLines="2"
                 android:text=""
                 android:textColor="@color/text_muted"
-                android:textSize="@dimen/text_tiny" />
+                android:textSize="@dimen/text_tiny"
+                android:visibility="invisible" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
