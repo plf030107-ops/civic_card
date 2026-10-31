@@ -1,1 +1,111 @@
-cGFja2FnZSBoay5ldGEuY2l2aWNjYXJkLmhvb2s7CgppbXBvcnQgYW5kcm9pZC5jb250ZW50LkNvbnRleHQ7CgppbXBvcnQgamF2YS5pby5GaWxlOwppbXBvcnQgamF2YS5pby5GaWxlT3V0cHV0U3RyZWFtOwppbXBvcnQgamF2YS5pby5JT0V4Y2VwdGlvbjsKaW1wb3J0IGphdmEubmlvLmNoYXJzZXQuU3RhbmRhcmRDaGFyc2V0czsKCmltcG9ydCBkZS5yb2J2LmFuZHJvaWQueHBvc2VkLlhwb3NlZEJyaWRnZTsKCi8qKgogKiDot6jov5vnqIvmlbDmja7okL3nm5jjgIIKICoKICog6YCa6YGT77yaL2RhdGEvbG9jYWwvdG1wL2NpdmljX2NhcmQvICDvvIg3NzfvvIzkuZjotqPlkozljaHniYfpg73og73orr/pl67vvIkKICoKICog5rOo5oSP77ya5pys57G76LeR5Zyo5LmY6Laj6L+b56iL77yIdTBfYTM3OO+8ie+8jOmdniByb29044CCCiAqIHNldFJlYWRhYmxlL3NldFdyaXRhYmxlIOWcqOmdniBvd25lciDml7bkvJrmipsgU2VjdXJpdHlFeGNlcHRpb27vvIwKICog5omA5Lul5q+P5LiA5q2l6YO95Y2V54usIHRyee+8jOWksei0peWPquiusOaXpeW/l+S4jeS4reaWreOAggogKi8KZmluYWwgY2xhc3MgU3RhdHVzU3RvcmUgewoKICAgIHByaXZhdGUgc3RhdGljIGZpbmFsIFN0cmluZyBUQUcgPSAiQ2l2aWNDYXJkIjsKCiAgICBzdGF0aWMgZmluYWwgU3RyaW5nIERJUiAgICAgID0gIi9kYXRhL2xvY2FsL3RtcC9jaXZpY19jYXJkIjsKICAgIHN0YXRpYyBmaW5hbCBTdHJpbmcgRl9TVEFUVVMgPSBESVIgKyAiL3N0YXR1cy5qc29uIjsKICAgIHN0YXRpYyBmaW5hbCBTdHJpbmcgRl9DTUQgICAgPSBESVIgKyAiL2xhc3RfY21kLnR4dCI7CiAgICBzdGF0aWMgZmluYWwgU3RyaW5nIEZfUkVTVUxUID0gRElSICsgIi9sYXN0X3Jlc3VsdC50eHQiOwogICAgc3RhdGljIGZpbmFsIFN0cmluZyBGX1JFQURZICA9IERJUiArICIvYnJpZGdlX3JlYWR5IjsKICAgIHN0YXRpYyBmaW5hbCBTdHJpbmcgRl9WSU4gICAgPSBESVIgKyAiL3Zpbi50eHQiOwoKICAgIHByaXZhdGUgU3RhdHVzU3RvcmUoKSB7fQoKICAgIHN0YXRpYyB2b2lkIHdyaXRlU3RhdHVzKENvbnRleHQgY3R4LCBTdHJpbmcganNvbikgewogICAgICAgIHdyaXRlKEZfU1RBVFVTLCBqc29uKTsKICAgIH0KCiAgICBzdGF0aWMgdm9pZCB3cml0ZUNvbW1hbmQoQ29udGV4dCBjdHgsIFN0cmluZyBkZXNjLCBsb25nIHRzKSB7CiAgICAgICAgd3JpdGUoRl9DTUQsIHRzICsgIlx0IiArIGRlc2MpOwogICAgfQoKICAgIHN0YXRpYyB2b2lkIHdyaXRlQ29tbWFuZFJlc3VsdChDb250ZXh0IGN0eCwgYm9vbGVhbiBvaywgU3RyaW5nIGRldGFpbCwgbG9uZyB0cykgewogICAgICAgIHdyaXRlKEZfUkVTVUxULCB0cyArICJcdCIgKyAob2sgPyAiT0siIDogIkZBSUwiKSArICJcdCIgKyBkZXRhaWwpOwogICAgfQoKICAgIHN0YXRpYyB2b2lkIHdyaXRlQnJpZGdlUmVhZHkoQ29udGV4dCBjdHgsIGJvb2xlYW4gcmVhZHkpIHsKICAgICAgICBpZiAocmVhZHkpIHdyaXRlKEZfUkVBRFksIFN0cmluZy52YWx1ZU9mKFN5c3RlbS5jdXJyZW50VGltZU1pbGxpcygpKSk7CiAgICB9CgogICAgc3RhdGljIHZvaWQgd3JpdGVWaW4oQ29udGV4dCBjdHgsIFN0cmluZyB2aW4pIHsKICAgICAgICB3cml0ZShGX1ZJTiwgdmluKTsKICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyB2b2lkIHdyaXRlKFN0cmluZyBwYXRoLCBTdHJpbmcgY29udGVudCkgewogICAgICAgIHRyeSB7CiAgICAgICAgICAgIGVuc3VyZURpcigpOwogICAgICAgIH0gY2F0Y2ggKFRocm93YWJsZSB0KSB7CiAgICAgICAgICAgIGxvZygiZW5zdXJlRGlyIGZhaWw6ICIgKyB0KTsKICAgICAgICB9CgogICAgICAgIEZpbGVPdXRwdXRTdHJlYW0gZm9zID0gbnVsbDsKICAgICAgICB0cnkgewogICAgICAgICAgICBGaWxlIHRtcCA9IG5ldyBGaWxlKHBhdGggKyAiLnRtcCIpOwogICAgICAgICAgICBmb3MgPSBuZXcgRmlsZU91dHB1dFN0cmVhbSh0bXApOwogICAgICAgICAgICBmb3Mud3JpdGUoY29udGVudC5nZXRCeXRlcyhTdGFuZGFyZENoYXJzZXRzLlVURl84KSk7CiAgICAgICAgICAgIGZvcy5mbHVzaCgpOwogICAgICAgICAgICBmb3MuZ2V0RkQoKS5zeW5jKCk7CiAgICAgICAgICAgIGZvcy5jbG9zZSgpOwogICAgICAgICAgICBmb3MgPSBudWxsOwoKICAgICAgICAgICAgRmlsZSBkc3QgPSBuZXcgRmlsZShwYXRoKTsKICAgICAgICAgICAgaWYgKGRzdC5leGlzdHMoKSAmJiAhZHN0LmRlbGV0ZSgpKSB7CiAgICAgICAgICAgICAgICBsb2coImRlbGV0ZSBvbGQgZmFpbDogIiArIHBhdGgpOwogICAgICAgICAgICB9CiAgICAgICAgICAgIGlmICghdG1wLnJlbmFtZVRvKGRzdCkpIHsKICAgICAgICAgICAgICAgIGxvZygicmVuYW1lIGZhaWw6ICIgKyBwYXRoKTsKICAgICAgICAgICAgICAgIC8vIOmAgOS4gOatpe+8muebtOaOpeimhuebluWGmQogICAgICAgICAgICAgICAgRmlsZU91dHB1dFN0cmVhbSBkID0gbmV3IEZpbGVPdXRwdXRTdHJlYW0oZHN0KTsKICAgICAgICAgICAgICAgIGQud3JpdGUoY29udGVudC5nZXRCeXRlcyhTdGFuZGFyZENoYXJzZXRzLlVURl84KSk7CiAgICAgICAgICAgICAgICBkLmZsdXNoKCk7CiAgICAgICAgICAgICAgICBkLmNsb3NlKCk7CiAgICAgICAgICAgIH0KCiAgICAgICAgICAgIC8vIOWNleeLrOWwneivleaUvuWuveadg+mZkO+8jOWksei0peaXoOWmqO+8iOWQjCBVSUQg5Y+v6K+777yJCiAgICAgICAgICAgIHRyeSB7IGRzdC5zZXRSZWFkYWJsZSh0cnVlLCBmYWxzZSk7IH0gY2F0Y2ggKFRocm93YWJsZSBpZ25vcmVkKSB7IH0KICAgICAgICAgICAgdHJ5IHsgZHN0LnNldFdyaXRhYmxlKHRydWUsIGZhbHNlKTsgfSBjYXRjaCAoVGhyb3dhYmxlIGlnbm9yZWQpIHsgfQogICAgICAgIH0gY2F0Y2ggKFRocm93YWJsZSB0KSB7CiAgICAgICAgICAgIGxvZygid3JpdGUgZmFpbCAiICsgcGF0aCArICIgOiAiICsgdCk7CiAgICAgICAgfSBmaW5hbGx5IHsKICAgICAgICAgICAgaWYgKGZvcyAhPSBudWxsKSB7CiAgICAgICAgICAgICAgICB0cnkgeyBmb3MuY2xvc2UoKTsgfSBjYXRjaCAoSU9FeGNlcHRpb24gaWdub3JlZCkgeyB9CiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICB9CgogICAgcHJpdmF0ZSBzdGF0aWMgdm9pZCBlbnN1cmVEaXIoKSB7CiAgICAgICAgRmlsZSBkaXIgPSBuZXcgRmlsZShESVIpOwogICAgICAgIGlmICghZGlyLmV4aXN0cygpKSB7CiAgICAgICAgICAgIGlmIChkaXIubWtkaXJzKCkpIHsKICAgICAgICAgICAgICAgIGxvZygibWtkaXIgIiArIERJUik7CiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgaWYgKCFkaXIuY2FuV3JpdGUoKSkgewogICAgICAgICAgICBsb2coImRpciBub3Qgd3JpdGFibGU6ICIgKyBESVIpOwogICAgICAgIH0KICAgIH0KCiAgICBwcml2YXRlIHN0YXRpYyB2b2lkIGxvZyhTdHJpbmcgcykgewogICAgICAgIFhwb3NlZEJyaWRnZS5sb2coVEFHICsgIiAiICsgcyk7CiAgICB9Cn0K
+package hk.eta.civiccard.hook;
+
+import android.content.Context;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
+import de.robv.android.xposed.XposedBridge;
+
+/**
+ * 跨进程数据落盘。
+ *
+ * 通道：/data/local/tmp/civic_card/  （777，乘趣和卡片都能访问）
+ *
+ * 注意：本类跑在乘趣进程（u0_a378），非 root。
+ * setReadable/setWritable 在非 owner 时会抛 SecurityException，
+ * 所以每一步都单独 try，失败只记日志不中断。
+ */
+final class StatusStore {
+
+    private static final String TAG = "CivicCard";
+
+    static final String DIR      = "/data/local/tmp/civic_card";
+    static final String F_STATUS = DIR + "/status.json";
+    static final String F_CMD    = DIR + "/last_cmd.txt";
+    static final String F_RESULT = DIR + "/last_result.txt";
+    static final String F_READY  = DIR + "/bridge_ready";
+    static final String F_VIN    = DIR + "/vin.txt";
+
+    private StatusStore() {}
+
+    static void writeStatus(Context ctx, String json) {
+        write(F_STATUS, json);
+    }
+
+    static void writeCommand(Context ctx, String desc, long ts) {
+        write(F_CMD, ts + "\t" + desc);
+    }
+
+    static void writeCommandResult(Context ctx, boolean ok, String detail, long ts) {
+        write(F_RESULT, ts + "\t" + (ok ? "OK" : "FAIL") + "\t" + detail);
+    }
+
+    static void writeBridgeReady(Context ctx, boolean ready) {
+        if (ready) write(F_READY, String.valueOf(System.currentTimeMillis()));
+    }
+
+    static void writeVin(Context ctx, String vin) {
+        write(F_VIN, vin);
+    }
+
+    private static void write(String path, String content) {
+        try {
+            ensureDir();
+        } catch (Throwable t) {
+            log("ensureDir fail: " + t);
+        }
+
+        FileOutputStream fos = null;
+        try {
+            File tmp = new File(path + ".tmp");
+            fos = new FileOutputStream(tmp);
+            fos.write(content.getBytes(StandardCharsets.UTF_8));
+            fos.flush();
+            fos.getFD().sync();
+            fos.close();
+            fos = null;
+
+            File dst = new File(path);
+            if (dst.exists() && !dst.delete()) {
+                log("delete old fail: " + path);
+            }
+            if (!tmp.renameTo(dst)) {
+                log("rename fail: " + path);
+                // 退一步：直接覆盖写
+                FileOutputStream d = new FileOutputStream(dst);
+                d.write(content.getBytes(StandardCharsets.UTF_8));
+                d.flush();
+                d.close();
+            }
+
+            // 单独尝试放宽权限，失败无妨（同 UID 可读）
+            try { dst.setReadable(true, false); } catch (Throwable ignored) { }
+            try { dst.setWritable(true, false); } catch (Throwable ignored) { }
+        } catch (Throwable t) {
+            log("write fail " + path + " : " + t);
+        } finally {
+            if (fos != null) {
+                try { fos.close(); } catch (IOException ignored) { }
+            }
+        }
+    }
+
+    private static void ensureDir() {
+        File dir = new File(DIR);
+        if (!dir.exists()) {
+            if (dir.mkdirs()) {
+                log("mkdir " + DIR);
+            }
+        }
+        if (!dir.canWrite()) {
+            log("dir not writable: " + DIR);
+        }
+    }
+
+    private static void log(String s) {
+        XposedBridge.log(TAG + " " + s);
+    }
+}
