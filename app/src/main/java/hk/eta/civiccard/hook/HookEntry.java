@@ -50,9 +50,9 @@ public class HookEntry implements IXposedHookLoadPackage {
             hookSendVehicleCommandVerbose(lpparam);
             StatusHooks.install(lpparam.classLoader);
             // StatusProbe.install(lpparam.classLoader);  // 已定位，关闭避免刷屏
-            BeanStatusReader.install(lpparam.classLoader);
+            // BeanStatusReader.install(lpparam.classLoader);  // 写入的是协议定义，非真实车况，关闭
             CredDumper.install(lpparam.classLoader);
-            RequestSniffer.install(lpparam.classLoader);
+            // RequestSniffer.install(lpparam.classLoader);  // 已定位，关闭避免刷屏
             ConditionHook.install(lpparam.classLoader);
             StatusSniffer.install(lpparam.classLoader);
             // NetSniffer.install(lpparam.classLoader);  // 已定位，关闭避免刷屏
