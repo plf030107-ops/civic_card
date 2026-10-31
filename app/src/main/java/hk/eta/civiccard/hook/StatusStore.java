@@ -51,9 +51,9 @@ final class StatusStore {
         write(F_VIN, vin);
     }
 
-    /** 云端原始字符串，用于分析字段格式 */
-    static void writeRawCloud(Context ctx, String json) {
-        write(DIR + "/cloud_raw.json", json);
+    /** 云端原始字符串，按类型分文件存，用于定位哪个字段是真实数值 */
+    static void writeRawCloud(Context ctx, String kind, String json) {
+        write(DIR + "/cloud_" + kind + ".json", json);
     }
 
     private static void write(String path, String content) {
