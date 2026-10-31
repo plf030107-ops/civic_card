@@ -12,7 +12,7 @@ import de.robv.android.xposed.XposedBridge;
 /**
  * 跨进程数据落盘。
  *
- * 写卡片的私有目录 /data/data/hk.eta.civiccard/files/bridge：
+ * 写卡片的私有目录 /data/local/tmp/civic_card：
  *   - 卡片进程天然可读
  *   - 乘趣进程需要该路径的父目录有 x 权限且 SELinux 无 categories 限制
  *     （已在部署脚本里处理：chmod 711 父目录 + chcon 去 categories）
@@ -21,7 +21,7 @@ final class StatusStore {
 
     private static final String TAG = "CivicCard";
 
-    static final String DIR = "/data/data/hk.eta.civiccard/files/bridge";
+    static final String DIR = "/data/local/tmp/civic_card";
 
     static final String F_STATUS = DIR + "/status.json";
     static final String F_CMD    = DIR + "/last_cmd.txt";
