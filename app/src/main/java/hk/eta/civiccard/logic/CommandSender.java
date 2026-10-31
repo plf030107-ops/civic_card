@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 public final class CommandSender {
 
     /** 卡片私有目录，与 hook 侧 StatusStore 保持一致 */
-    public static final String DIR   = "/data/data/hk.eta.civiccard/files/bridge";
+    public static final String DIR   = "/data/local/tmp/civic_card";
     public static final String F_REQ = DIR + "/cmd_req";
     public static final String F_RES = DIR + "/local_result.txt";
 
