@@ -5,65 +5,81 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 /**
- * 网络响应抓取器。
+ * 抓取 OkHttp 请求 URL + 响应，定位车况接口。
  *
- * 车况数值既不在数据库、也不在 bean 字段里，只能来自云端接口响应。
- * 这里 hook OkHttp 的 ResponseBody.string()，把可疑的响应体落盘。
- *
- * 只关注包含车况关键词的响应，避免刷爆磁盘。
+ * 记录格式：每行 "URL <方法> <url>"，响应体另存。
+ * 用于找出 App 实际请求哪个接口、带什么 header。
  */
 final class NetSniffer {
 
     private static volatile boolean sInstalled = false;
-    private static long sLastLog = 0;
     private static int sHit = 0;
-
-    /** 命中这些关键词就认为可能是车况响应 */
-    private static final String[] KEYS = {
-            "totalMileage", "continuationMileage", "frontLeftLock",
-            "vehicleStatus", "remainL", "voltage", "batteryPercentage"
-    };
+    private static final StringBuilder sUrls = new StringBuilder();
+    private static long sLastFlush = 0;
 
     private NetSniffer() {}
 
     static void install(ClassLoader cl) {
         if (sInstalled) return;
         sInstalled = true;
+
+        // 1. 抓请求 URL
+        try {
+            Class<?> req = XposedHelpers.findClassIfExists("okhttp3.Request", cl);
+            if (req != null) {
+                XposedBridge.hookAllMethods(req, "url", new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        Object u = param.getResult();
+                        if (u == null) return;
+                        String url = String.valueOf(u);
+                        synchronized (sUrls) {
+                            if (sUrls.indexOf(url) < 0) {
+                                sUrls.append(url).append('\n');
+                                flush();
+                            }
+                        }
+                    }
+                });
+                XposedBridge.log("CivicCard NetSniffer url hook ok");
+            }
+        } catch (Throwable t) {
+            XposedBridge.log("CivicCard NetSniffer url fail: " + t);
+        }
+
+        // 2. 抓响应体
         try {
             Class<?> body = XposedHelpers.findClassIfExists("okhttp3.ResponseBody", cl);
-            if (body == null) {
-                XposedBridge.log("CivicCardSniff okhttp not found");
-                return;
-            }
-            XposedBridge.hookAllMethods(body, "string", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) {
-                    Object ret = param.getResult();
-                    if (!(ret instanceof String)) return;
-                    String s = (String) ret;
-                    if (s.length() < 30) return;
-                    sHit++;
-                    // 不过滤，全部留档，便于事后定位车况接口
-                    StatusStore.writeRawCloud(null, "all_" + (sHit % 20), s);
-                    if (looksLikeStatus(s)) {
-                        StatusStore.writeRawCloud(null, "hit_" + (sHit % 10), s);
-                        XposedBridge.log("CivicCardSniff HIT#" + sHit + " len=" + s.length());
+            if (body != null) {
+                XposedBridge.hookAllMethods(body, "string", new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        Object ret = param.getResult();
+                        if (!(ret instanceof String)) return;
+                        String s = (String) ret;
+                        if (s.length() < 100) return;
+                        if (!looksLikeCar(s)) return;
+                        sHit++;
+                        StatusStore.writeRawCloud(null, "resp_" + (sHit % 8), s);
+                        XposedBridge.log("CivicCard NetSniffer car-resp#" + sHit
+                                + " len=" + s.length());
                     }
-                }
-            });
-            XposedBridge.log("CivicCardSniff installed");
+                });
+            }
         } catch (Throwable t) {
-            XposedBridge.log("CivicCardSniff fail: " + t);
+            XposedBridge.log("CivicCard NetSniffer body fail: " + t);
         }
     }
 
-    private static boolean looksLikeStatus(String s) {
-        // 必须同时出现两个以上车况字段，避免误报
-        int c = 0;
-        for (String k : KEYS) {
-            if (s.contains(k)) c++;
-            if (c >= 2) return true;
-        }
-        return false;
+    private static void flush() {
+        long now = System.currentTimeMillis();
+        if (now - sLastFlush < 1000) return;
+        sLastFlush = now;
+        StatusStore.writeFile("urls.txt", sUrls.toString());
+    }
+
+    private static boolean looksLikeCar(String s) {
+        return s.contains("pstateData") || s.contains("imStateData")
+                || s.contains("vehicleStatus") || s.contains("continuationMileage");
     }
 }
