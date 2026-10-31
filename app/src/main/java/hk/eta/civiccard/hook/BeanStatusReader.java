@@ -7,26 +7,24 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 /**
- * 从 VehicleDetailBean.isCanUseState() 命中点主动读取车况字段。
+ * 从 VehicleDetailBean 主动读车况。
  *
- * 为什么这样做：setVehicleStatusData 从未被调用（探针确认），
- * 但 isCanUseState 每秒被调用多次且对象一直存活，
- * 说明车况字符串已经在这个 bean 上了，只是写入路径不同。
- * 所以改成"命中时主动读"，不再等 setter。
+ * 三个候选字段分开落盘，便于定位哪个存的是实际数值：
+ *   vehicleStatusData           - 实测是协议定义（items 说明），不是数值
+ *   vehicleStatusHighFrequency  - 高频状态
+ *   vehicleStatusLowFrequency   - 低频状态
+ *
+ * 采样点用 isCanUseState()，它每秒被调用多次且对象常驻。
  */
 final class BeanStatusReader {
 
     private static final String CLS_BEAN = "com.ingeek.jsbridge.bean.db.VehicleDetailBean";
 
-    /** 车况可能的字段，按优先级 */
-    private static final String[] STATUS_FIELDS = {
-            "vehicleStatusData",
-            "vehicleStatusHighFrequency",
-            "vehicleStatusLowFrequency",
-    };
-
     private static volatile boolean sInstalled = false;
     private static long sLastLog = 0;
+    private static String sLastData = "";
+    private static String sLastHigh = "";
+    private static String sLastLow = "";
 
     private BeanStatusReader() {}
 
@@ -39,22 +37,12 @@ final class BeanStatusReader {
                 XposedBridge.log("CivicCard bean not found");
                 return;
             }
-            // isCanUseState 高频调用，正好当采样点
             XposedBridge.hookAllMethods(c, "isCanUseState", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     Object bean = param.thisObject;
                     if (bean == null) return;
-                    String data = pickStatus(bean);
-                    if (data == null || data.length() < 5) {
-                        long now = System.currentTimeMillis();
-                        if (now - sLastLog > 30000) {
-                            sLastLog = now;
-                            XposedBridge.log("CivicCard bean: all status fields empty");
-                        }
-                        return;
-                    }
-                    BridgeServer.get().onCloudStatus(data);
+                    sample(bean);
                 }
             });
             XposedBridge.log("CivicCard beanStatusReader installed");
@@ -63,19 +51,65 @@ final class BeanStatusReader {
         }
     }
 
-    /** 按优先级取第一个非空的车况字符串 */
-    private static String pickStatus(Object bean) {
-        for (String fn : STATUS_FIELDS) {
-            try {
-                Field f = bean.getClass().getDeclaredField(fn);
-                f.setAccessible(true);
-                Object v = f.get(bean);
-                if (v instanceof String) {
-                    String s = (String) v;
-                    if (s.length() >= 5 && !"null".equals(s)) return s;
-                }
-            } catch (Throwable ignored) { }
+    private static void sample(Object bean) {
+        String data = str(bean, "vehicleStatusData");
+        String high = str(bean, "vehicleStatusHighFrequency");
+        String low  = str(bean, "vehicleStatusLowFrequency");
+
+        boolean changed = false;
+
+        if (data != null && !data.equals(sLastData)) {
+            sLastData = data;
+            StatusStore.writeRawCloud(null, "data", data);
+            changed = true;
         }
+        if (high != null && !high.equals(sLastHigh)) {
+            sLastHigh = high;
+            StatusStore.writeRawCloud(null, "high", high);
+            changed = true;
+        }
+        if (low != null && !low.equals(sLastLow)) {
+            sLastLow = low;
+            StatusStore.writeRawCloud(null, "low", low);
+            changed = true;
+        }
+
+        if (changed) {
+            XposedBridge.log("CivicCard bean changed: data=" + len(data)
+                    + " high=" + len(high) + " low=" + len(low));
+        }
+
+        long now = System.currentTimeMillis();
+        if (now - sLastLog > 60000) {
+            sLastLog = now;
+            XposedBridge.log("CivicCard bean sample: data=" + len(data)
+                    + " high=" + len(high) + " low=" + len(low));
+        }
+
+        // 优先用高频/低频（更像真实数值），都没有才退回 data
+        String pick = null;
+        if (high != null && high.length() > 5) pick = high;
+        else if (low != null && low.length() > 5) pick = low;
+
+        if (pick != null) {
+            BridgeServer.get().onCloudStatus(pick);
+        }
+    }
+
+    private static int len(String s) {
+        return s == null ? -1 : s.length();
+    }
+
+    private static String str(Object bean, String field) {
+        try {
+            Field f = bean.getClass().getDeclaredField(field);
+            f.setAccessible(true);
+            Object v = f.get(bean);
+            if (v instanceof String) {
+                String s = (String) v;
+                if (s.length() >= 5 && !"null".equals(s)) return s;
+            }
+        } catch (Throwable ignored) { }
         return null;
     }
 }
