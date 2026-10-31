@@ -3,6 +3,7 @@ package hk.eta.civiccard.hook;
 import android.content.Context;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -11,18 +12,20 @@ import de.robv.android.xposed.XposedBridge;
 /**
  * 跨进程数据落盘。
  *
- * 【关键】写入卡片自己的私有目录 /data/data/hk.eta.civiccard/files：
- *   - 该目录上下文是 app_data_file，卡片进程天然可读
- *   - 乘趣进程无权限直接写，所以通过 su 写
+ * 【为什么直接写，不走 su】
+ * 实测乘趣进程虽然进了 KernelSU 白名单，但 hook 里 Runtime.exec("su")
+ * 仍被拒绝（进程未以交互身份启动）。而目标目录权限是 777、
+ * 上下文 app_data_file，直写就能成功。
  *
- * 之前用 /data/local/tmp 失败，是因为那里的文件带 SELinux categories，
- * 两个不同 UID 的应用互相读不到（即使 chmod 666 也不行）。
+ * 【为什么写卡片的私有目录】
+ * /data/local/tmp 下的文件带 SELinux categories（c122 vs c152），
+ * 两个不同 UID 的应用即使 chmod 666 也互不相通。
+ * 卡片自己的 files/bridge 是双方唯一都可达的位置。
  */
 final class StatusStore {
 
     private static final String TAG = "CivicCard";
 
-    /** 卡片私有目录 */
     static final String DIR = "/data/data/hk.eta.civiccard/files/bridge";
 
     static final String F_STATUS = DIR + "/status.json";
@@ -39,7 +42,6 @@ final class StatusStore {
         write(F_STATUS, json, false);
     }
 
-    /** 指令通道需要卡片可写，权限放宽到 666 */
     static void writeCommand(Context ctx, String desc, long ts) {
         write(F_CMD, ts + "\t" + desc, true);
     }
@@ -64,38 +66,26 @@ final class StatusStore {
         write(DIR + "/" + name, content, false);
     }
 
-    /**
-     * 通过 su 写入卡片目录。
-     *
-     * @param worldWritable true 时 chmod 666，供卡片读写（指令通道）
-     */
     private static void write(String path, String content, boolean worldWritable) {
-        Process p = null;
+        FileOutputStream fos = null;
         try {
-            p = Runtime.getRuntime().exec("su");
-            java.io.OutputStream os = p.getOutputStream();
-            StringBuilder sb = new StringBuilder();
-            sb.append("mkdir -p ").append(DIR).append("\n");
-            sb.append("chmod 777 ").append(DIR).append("\n");
-            // 用 heredoc 避免内容里的特殊字符出问题
-            sb.append("cat > '").append(path).append("' <<'ETAEOF'\n");
-            sb.append(content).append("\nETAEOF\n");
-            sb.append("chmod ").append(worldWritable ? "666" : "644")
-              .append(" '").append(path).append("'\n");
-            sb.append("exit\n");
-            os.write(sb.toString().getBytes(StandardCharsets.UTF_8));
-            os.flush();
-            os.close();
-            p.waitFor();
+            File dir = new File(DIR);
+            if (!dir.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                dir.mkdirs();
+            }
+            fos = new FileOutputStream(path, false);
+            fos.write(content.getBytes(StandardCharsets.UTF_8));
+            fos.flush();
         } catch (Throwable t) {
             long now = System.currentTimeMillis();
-            if (now - sLastErr > 60000) {
+            if (now - sLastErr > 30000) {
                 sLastErr = now;
                 XposedBridge.log(TAG + " write fail " + path + " : " + t);
             }
         } finally {
-            if (p != null) {
-                try { p.destroy(); } catch (Throwable ignored) { }
+            if (fos != null) {
+                try { fos.close(); } catch (IOException ignored) { }
             }
         }
     }
