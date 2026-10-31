@@ -179,6 +179,13 @@ public class CardActivity extends Activity {
     }
 
     private void renderLock(VehicleStatus st) {
+        if (!st.hasDoorLock) {
+            // 云端数据暂无门锁位，明确显示未知
+            tvLockIcon.setText("🚗");
+            tvLockState.setText("状态未知");
+            tvLockState.setTextColor(getColor(R.color.text_muted));
+            return;
+        }
         boolean locked = st.doorsLocked();
         tvLockState.setText(locked ? "已锁车" : "未锁车");
         tvLockState.setTextColor(getColor(locked ? R.color.ok : R.color.warn));
@@ -186,6 +193,13 @@ public class CardActivity extends Activity {
     }
 
     private void renderDoors(VehicleStatus st) {
+        if (!st.hasDoor && !st.hasWindow) {
+            setUnknown(tvFLStat);
+            setUnknown(tvFRStat);
+            setUnknown(tvRLStat);
+            setUnknown(tvRRStat);
+            return;
+        }
         setDoor(tvFLStat, st.frontLeftDoor, st.frontLeftWindow);
         setDoor(tvFRStat, st.frontRightDoor, st.frontRightWindow);
         setDoor(tvRLStat, st.rearLeftDoor, st.rearLeftWindow);
@@ -206,14 +220,19 @@ public class CardActivity extends Activity {
     }
 
     private void renderEnergy(VehicleStatus st) {
-        tvBattery.setText(st.batteryPercentage > 0
+        tvBattery.setText(st.hasBattery && st.batteryPercentage > 0
                 ? st.batteryPercentage + "%" : "--%");
 
-        int km = st.continuationMileage > 0 ? st.continuationMileage : st.remainLMileage;
+        int km = 0;
+        if (st.hasRemainMileage && st.continuationMileage > 0) {
+            km = st.continuationMileage;
+        } else if (st.hasTotalMileage && st.remainLMileage > 0) {
+            km = st.remainLMileage;
+        }
         tvRange.setText(km > 0 ? km + " km" : "-- km");
 
-        double t = st.temperatureInside;
-        tvTemp.setText(t > -39.0 ? String.format(Locale.US, "%.0f°C", t) : "--°C");
+        tvTemp.setText(st.hasTempInside && st.temperatureInside > -39.0
+                ? String.format(Locale.US, "%.0f°C", st.temperatureInside) : "--°C");
     }
 
     private void showResultIfAny() {
