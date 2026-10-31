@@ -1,6 +1,7 @@
 package hk.eta.civiccard.ui;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,8 +18,10 @@ import hk.eta.civiccard.logic.VehicleStatus;
 /**
  * 背屏卡片主界面。
  *
- * 关键原则：没有车况数据时一律显示「--」，
- * 绝不显示假的「已锁车/关闭」，否则用户会误判车辆真实状态。
+ * 三条硬规则：
+ *  1. 没有车况数据时显示「--」，绝不显示假的已锁车/关闭
+ *  2. 所有操作都必须二次确认，防误触
+ *  3. 不提供后备箱控制，避免误开
  */
 public class CardActivity extends Activity {
 
@@ -70,14 +73,13 @@ public class CardActivity extends Activity {
         renderUnknown();
     }
 
+    /** 只有解锁、上锁、寻车三个操作，不含后备箱 */
     private void bindActions() {
         bindBtn(R.id.btnUnlock, "🔓", "解锁", CommandSender.CMD_UNLOCK);
-        bindBtn(R.id.btnLock, "🔒", "上锁", CommandSender.CMD_LOCK);
-        bindBtn(R.id.btnTrunk, "🧳", "后备箱", CommandSender.CMD_OPEN_TRUNK);
-        bindBtn(R.id.btnFind, "📍", "寻车", CommandSender.CMD_SEARCH);
+        bindBtn(R.id.btnLock,   "🔒", "上锁", CommandSender.CMD_LOCK);
+        bindBtn(R.id.btnFind,   "📍", "寻车", CommandSender.CMD_SEARCH);
     }
 
-    /** 按钮是 include 进来的布局，图标和文字在子 View 里 */
     private void bindBtn(int id, String icon, String label, String alias) {
         android.view.View root = findViewById(id);
         if (root == null) return;
@@ -85,12 +87,42 @@ public class CardActivity extends Activity {
         TextView lb = root.findViewById(R.id.btnLabel);
         if (ic != null) ic.setText(icon);
         if (lb != null) lb.setText(label);
-        root.setOnClickListener(v -> fire(alias, label));
+        root.setOnClickListener(v -> confirmThenFire(alias, label));
     }
 
-    private void fire(String alias, String label) {
+    // ------------------------------------------------------------ 二次确认
+
+    /**
+     * 所有操作统一走这里：先弹确认框，确认后才下发。
+     * 背屏误触成本高（可能直接开车门），必须拦一道。
+     */
+    private void confirmThenFire(String alias, String label) {
+        String block = mLast != null ? mLast.preconditionBlockReason(alias) : null;
+
+        StringBuilder msg = new StringBuilder();
+        msg.append("确定要").append(label).append("吗？");
+        if (block != null) {
+            msg.append("\n\n注意：车辆当前").append(block).append("，可能无法执行。");
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(label)
+                .setMessage(msg.toString())
+                .setPositiveButton("确定", (d, w) -> {
+                    d.dismiss();
+                    doFire(alias, label);
+                })
+                .setNegativeButton("取消", (d, w) -> {
+                    d.dismiss();
+                    showTip("已取消");
+                })
+                .setCancelable(true)
+                .show();
+    }
+
+    private void doFire(String alias, String label) {
         if (mLast == null) {
-            showTip("暂无车况");
+            showTip("暂无车况，无法操作");
             return;
         }
         String block = mLast.preconditionBlockReason(alias);
@@ -107,6 +139,8 @@ public class CardActivity extends Activity {
         tvTip.setText(s);
         tvTip.setTextColor(getColor(R.color.text_secondary));
     }
+
+    // ------------------------------------------------------------ 刷新
 
     private void refresh() {
         boolean ready = BridgeReader.isReady();
@@ -126,12 +160,10 @@ public class CardActivity extends Activity {
         showResultIfAny();
     }
 
-    /** 无数据态：明确显示未知，不做任何乐观假设 */
     private void renderUnknown() {
         tvLockIcon.setText("🚗");
         tvLockState.setText("暂无车况");
         tvLockState.setTextColor(getColor(R.color.text_muted));
-        tvLockState.setTextSize(26f);
         setUnknown(tvFLStat);
         setUnknown(tvFRStat);
         setUnknown(tvRLStat);
@@ -147,7 +179,6 @@ public class CardActivity extends Activity {
     }
 
     private void renderLock(VehicleStatus st) {
-        tvLockState.setTextSize(26f);
         boolean locked = st.doorsLocked();
         tvLockState.setText(locked ? "已锁车" : "未锁车");
         tvLockState.setTextColor(getColor(locked ? R.color.ok : R.color.warn));
