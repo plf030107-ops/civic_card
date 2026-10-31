@@ -1,6 +1,5 @@
 package hk.eta.civiccard.hook;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -8,43 +7,31 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 /**
- * 车况与指令结果的 hook。
+ * 车况来源钩子。
  *
- * 【已从 dexdump 精确确认】
+ * 两个来源都要挂：
+ *  1. BLE：VehicleCommandListener.onReceiveCommandRawData(byte[]) —— 靠近车时
+ *  2. 云端：VehicleDetailBean.setVehicleStatusData(String) —— 远程查询，不需要靠近车
  *
- * com.ingeek.nokeeu.key.listener.VehicleCommandListener（接口，方法全 public）
- *   boolean isEnableCommandRawDataReturn()
- *   boolean isEnableCommandRawDataReturn(String)
- *   void onExecuteFail(IngeekVehicleCommandResponse, IngeekException)
- *   void onExecuteSuccess(IngeekVehicleCommandResponse)
- *   void onExecuting(IngeekVehicleCommandResponse)
- *   void onReceiveCommandRawData(String, byte[], IngeekException)   ← 带 vin 的原始帧
- *   void onReceiveCommandRawData(byte[], IngeekException)           ← 原始帧
- *
- * com.ingeek.nokeeu.key.business.bean.IngeekVehicleCommandResponse
- *   字段 private: commandCode(I) commandTag(B) commandValue(byte[]) reason(B) result(B) vin(String)
- *   公开 getter: getCommandCode/getCommandTag/getCommandValue/getReason/getResult/getVin
- *
- * 车况帧就是从 onReceiveCommandRawData 的 byte[] 出来的。
+ * 第 2 条是关键：App 的远程车况最终写进数据库字段
+ * com.ingeek.jsbridge.bean.db.VehicleDetailBean.setVehicleStatusData(String)，
+ * 这里直接截获它，就不必依赖蓝牙连接。
  */
 final class StatusHooks {
 
     private static final String CLS_LISTENER = "com.ingeek.nokeeu.key.listener.VehicleCommandListener";
-    private static final String CLS_RESPONSE = "com.ingeek.nokeeu.key.business.bean.IngeekVehicleCommandResponse";
+    private static final String CLS_DETAIL_BEAN = "com.ingeek.jsbridge.bean.db.VehicleDetailBean";
 
     private StatusHooks() {}
 
     static void install(ClassLoader cl) {
         hookRawData(cl);
+        hookCloudStatus(cl);
         hookExecState(cl);
         log("status hooks installed");
     }
 
-    /**
-     * 车况帧主来源。两个重载都挂：
-     *   onReceiveCommandRawData(byte[], IngeekException)
-     *   onReceiveCommandRawData(String, byte[], IngeekException)
-     */
+    /** 车况帧（BLE 原始数据） */
     private static void hookRawData(ClassLoader cl) {
         try {
             Class<?> listener = XposedHelpers.findClassIfExists(CLS_LISTENER, cl);
@@ -63,9 +50,7 @@ final class StatusHooks {
                                 else if (a instanceof String) vin = (String) a;
                             }
                             if (frame == null || frame.length < 76) return;
-                            if (vin != null) {
-                                BridgeServer.get().setVin(vin);
-                            }
+                            if (vin != null) BridgeServer.get().setVin(vin);
                             BridgeServer.get().onRawStatusFrame(frame);
                         }
                     }).size();
@@ -75,7 +60,39 @@ final class StatusHooks {
         }
     }
 
-    /** 指令执行结果，用于卡片显示"解锁中/已解锁" */
+    /**
+     * 云端车况：setVehicleStatusData(String)
+     *
+     * 这是远程通道的落点。App 从云端拉到车况后写入该字段，
+     * 截获它就能在不连蓝牙的情况下拿到车况。
+     */
+    private static void hookCloudStatus(ClassLoader cl) {
+        try {
+            Class<?> bean = XposedHelpers.findClassIfExists(CLS_DETAIL_BEAN, cl);
+            if (bean == null) {
+                log("VehicleDetailBean not found");
+                return;
+            }
+            int n = XposedBridge.hookAllMethods(bean, "setVehicleStatusData",
+                    new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            if (param.args.length == 0) return;
+                            Object v = param.args[0];
+                            if (!(v instanceof String)) return;
+                            String json = (String) v;
+                            if (json.length() < 10) return;
+                            log("cloud status len=" + json.length());
+                            BridgeServer.get().onCloudStatus(json);
+                        }
+                    }).size();
+            log("hooked setVehicleStatusData x" + n);
+        } catch (Throwable t) {
+            log("hookCloudStatus failed: " + t);
+        }
+    }
+
+    /** 指令执行状态 */
     private static void hookExecState(ClassLoader cl) {
         try {
             Class<?> listener = XposedHelpers.findClassIfExists(CLS_LISTENER, cl);
@@ -84,8 +101,8 @@ final class StatusHooks {
             XposedBridge.hookAllMethods(listener, "onExecuteSuccess", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    Object resp = param.args.length > 0 ? param.args[0] : null;
-                    BridgeServer.get().onCommandResult(true, describeResponse(resp));
+                    BridgeServer.get().onCommandResult(true, describeResponse(
+                            param.args.length > 0 ? param.args[0] : null));
                 }
             });
 
@@ -102,8 +119,8 @@ final class StatusHooks {
             XposedBridge.hookAllMethods(listener, "onExecuting", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    Object resp = param.args.length > 0 ? param.args[0] : null;
-                    BridgeServer.get().onCommandExecuting(describeResponse(resp));
+                    BridgeServer.get().onCommandExecuting(describeResponse(
+                            param.args.length > 0 ? param.args[0] : null));
                 }
             });
             log("hooked exec state callbacks");
@@ -112,21 +129,18 @@ final class StatusHooks {
         }
     }
 
-    /** 用公开 getter 读响应内容 */
     private static String describeResponse(Object resp) {
         if (resp == null) return "null";
-        StringBuilder sb = new StringBuilder();
         try {
             Method getCode = resp.getClass().getMethod("getCommandCode");
             Method getResult = resp.getClass().getMethod("getResult");
             Method getReason = resp.getClass().getMethod("getReason");
-            sb.append("code=").append(getCode.invoke(resp))
-              .append(" result=").append(getResult.invoke(resp))
-              .append(" reason=").append(getReason.invoke(resp));
+            return "code=" + getCode.invoke(resp)
+                    + " result=" + getResult.invoke(resp)
+                    + " reason=" + getReason.invoke(resp);
         } catch (Throwable t) {
-            sb.append(resp.getClass().getSimpleName());
+            return resp.getClass().getSimpleName();
         }
-        return sb.toString();
     }
 
     private static void log(String msg) {
