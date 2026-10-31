@@ -82,6 +82,30 @@ public final class BridgeServer {
         StatusStore.writeStatus(mCtx, text);
     }
 
+    /**
+     * 云端车况（JSON 字符串）。
+     * 与 BLE 帧是同一套字段，但以 key/value 形式给出，直接透传给卡片即可。
+     */
+    void onCloudStatus(String json) {
+        try {
+            VehicleStatus st = StatusJson.fromJson(json);
+            if (st != null) {
+                st.timestampMs = System.currentTimeMillis();
+                String normalized = StatusJson.toJson(st);
+                mLastStatusJson = normalized;
+                StatusStore.writeStatus(mCtx, normalized);
+                HookEntry.log("bridge: cloud status ok");
+            } else {
+                // 字段名可能不同，先原样落盘
+                mLastStatusJson = json;
+                StatusStore.writeStatus(mCtx, json);
+                HookEntry.log("bridge: cloud status raw");
+            }
+        } catch (Throwable t) {
+            HookEntry.log("bridge: cloud status fail " + t);
+        }
+    }
+
     void setVin(String vin) {
         if (vin != null && !vin.isEmpty()) {
             mVin = vin;
