@@ -88,18 +88,18 @@ public final class BridgeServer {
      */
     void onCloudStatus(String json) {
         try {
+            // 先原样存档一份，便于分析真实格式
+            StatusStore.writeRawCloud(mCtx, json);
+
             VehicleStatus st = StatusJson.fromJson(json);
             if (st != null) {
                 st.timestampMs = System.currentTimeMillis();
                 String normalized = StatusJson.toJson(st);
                 mLastStatusJson = normalized;
                 StatusStore.writeStatus(mCtx, normalized);
-                HookEntry.log("bridge: cloud status ok");
             } else {
-                // 字段名可能不同，先原样落盘
                 mLastStatusJson = json;
                 StatusStore.writeStatus(mCtx, json);
-                HookEntry.log("bridge: cloud status raw");
             }
         } catch (Throwable t) {
             HookEntry.log("bridge: cloud status fail " + t);
