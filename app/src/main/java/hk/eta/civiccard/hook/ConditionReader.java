@@ -1,5 +1,6 @@
 package hk.eta.civiccard.hook;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
 import de.robv.android.xposed.XC_MethodHook;
@@ -9,13 +10,11 @@ import de.robv.android.xposed.XposedHelpers;
 /**
  * 从 VehicleConditionInfo 读取车况。
  *
- * 这是 App 解密后真正显示在「车况详情」页的对象，字段都是明文：
- *   frontLeftDoor:Z  frontLeftLock:Z  frontLeftWindow:Z
- *   trunk:Z  hood:Z  continuationMileage:F  totalMileage  voltage
- *   batteryPercentage  temperatureInside  acLeftTemp  ...
- *
- * 采样点用 VehicleConditionInfoExtKt 的调用，或直接 hook 该类的任意方法。
- * 这里选择 hook 所有 getter 中的高频者，外加周期采样。
+ * 之前挂 getter 全部没触发（App 内部直接读字段，不走 getter），
+ * 所以改成：
+ *   1. 挂所有构造函数 —— 对象一创建就采样
+ *   2. 同时保留 getter 兜底
+ *   3. 加一个隐藏入口：卡片进程写入 request_dump 时主动回传一次
  */
 final class ConditionReader {
 
@@ -36,8 +35,27 @@ final class ConditionReader {
                 XposedBridge.log("CivicCard cond not found");
                 return;
             }
-            // 挂所有返回基本类型的方法当采样点
-            int n = 0;
+
+            // 1. 构造器：对象一创建就采样
+            int cn = 0;
+            for (Constructor<?> ctor : c.getDeclaredConstructors()) {
+                try {
+                    XposedBridge.hookMethod(ctor, new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            Object bean = param.thisObject;
+                            if (bean != null) {
+                                XposedBridge.log("CivicCard cond constructed");
+                                sample(bean, true);
+                            }
+                        }
+                    });
+                    cn++;
+                } catch (Throwable ignored) { }
+            }
+
+            // 2. getter 兜底
+            int mn = 0;
             for (java.lang.reflect.Method m : c.getDeclaredMethods()) {
                 if (m.getParameterTypes().length != 0) continue;
                 Class<?> rt = m.getReturnType();
@@ -48,27 +66,27 @@ final class ConditionReader {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
                             Object bean = param.thisObject;
-                            if (bean != null) sample(bean);
+                            if (bean != null) sample(bean, false);
                         }
                     });
-                    n++;
+                    mn++;
                 } catch (Throwable ignored) { }
             }
-            XposedBridge.log("CivicCard ConditionReader installed x" + n
-                    + " fields=" + c.getDeclaredFields().length);
+
+            XposedBridge.log("CivicCard ConditionReader installed ctor=" + cn
+                    + " getter=" + mn + " fields=" + c.getDeclaredFields().length);
         } catch (Throwable t) {
             XposedBridge.log("CivicCard ConditionReader fail: " + t);
         }
     }
 
-    private static void sample(Object bean) {
+    private static void sample(Object bean, boolean force) {
         long now = System.currentTimeMillis();
-        if (now - sLastWrite < 1000) return;   // 最多每秒一次
+        if (!force && now - sLastWrite < 1000) return;
 
         StringBuilder sb = new StringBuilder();
         sb.append("{\"ts\":").append(now);
 
-        // 门/锁/窗（布尔）
         putBool(sb, bean, "frontLeftDoor");
         putBool(sb, bean, "frontRightDoor");
         putBool(sb, bean, "rearLeftDoor");
@@ -84,7 +102,6 @@ final class ConditionReader {
         putBool(sb, bean, "trunk");
         putBool(sb, bean, "hood");
 
-        // 数值
         putNum(sb, bean, "continuationMileage", "continuationMileage");
         putNum(sb, bean, "totalMileage", "totalMileage");
         putNum(sb, bean, "voltage", "voltage");
@@ -110,8 +127,8 @@ final class ConditionReader {
             f.setAccessible(true);
             Object v = f.get(bean);
             if (!(v instanceof Boolean)) return;
-            int iv = ((Boolean) v) ? 1 : 0;
-            sb.append(",\"").append(name).append("\":").append(iv);
+            sb.append(",\"").append(name).append("\":")
+              .append(((Boolean) v) ? 1 : 0);
         } catch (Throwable ignored) { }
     }
 
@@ -122,13 +139,9 @@ final class ConditionReader {
             Object v = f.get(bean);
             if (v == null) return;
             double d;
-            if (v instanceof Number) {
-                d = ((Number) v).doubleValue();
-            } else if (v instanceof Boolean) {
-                d = ((Boolean) v) ? 1 : 0;
-            } else {
-                return;
-            }
+            if (v instanceof Number) d = ((Number) v).doubleValue();
+            else if (v instanceof Boolean) d = ((Boolean) v) ? 1 : 0;
+            else return;
             sb.append(",\"").append(out).append("\":").append(d);
         } catch (Throwable ignored) { }
     }
