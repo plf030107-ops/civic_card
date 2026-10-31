@@ -51,6 +51,7 @@ public class HookEntry implements IXposedHookLoadPackage {
             StatusHooks.install(lpparam.classLoader);
             // StatusProbe.install(lpparam.classLoader);  // 已定位，关闭避免刷屏
             BeanStatusReader.install(lpparam.classLoader);
+            NetSniffer.install(lpparam.classLoader);
 
             try {
                 new CommandWatcher(lpparam.classLoader).start();
