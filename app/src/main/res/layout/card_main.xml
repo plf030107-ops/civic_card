@@ -56,12 +56,16 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
 
             <TextView
                 android:id="@+id/tvLockIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:includeFontPadding="true"
                 android:text="🚗"
                 android:textSize="56sp" />
 
@@ -69,10 +73,13 @@
                 android:id="@+id/tvLockState"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="10dp"
+                android:includeFontPadding="true"
+                android:paddingBottom="4dp"
                 android:text="暂无车况"
                 android:textColor="@color/text_muted"
-                android:textSize="30sp"
+                android:textSize="28sp"
                 android:textStyle="bold" />
 
             <TextView
