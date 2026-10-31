@@ -71,14 +71,21 @@ public class CardActivity extends Activity {
     }
 
     private void bindActions() {
-        findViewById(R.id.btnUnlock).setOnClickListener(v ->
-                fire(CommandSender.CMD_UNLOCK, "解锁"));
-        findViewById(R.id.btnLock).setOnClickListener(v ->
-                fire(CommandSender.CMD_LOCK, "上锁"));
-        findViewById(R.id.btnTrunk).setOnClickListener(v ->
-                fire(CommandSender.CMD_OPEN_TRUNK, "开后备箱"));
-        findViewById(R.id.btnFind).setOnClickListener(v ->
-                fire(CommandSender.CMD_SEARCH, "寻车"));
+        bindBtn(R.id.btnUnlock, "🔓", "解锁", CommandSender.CMD_UNLOCK);
+        bindBtn(R.id.btnLock, "🔒", "上锁", CommandSender.CMD_LOCK);
+        bindBtn(R.id.btnTrunk, "🧳", "后备箱", CommandSender.CMD_OPEN_TRUNK);
+        bindBtn(R.id.btnFind, "📍", "寻车", CommandSender.CMD_SEARCH);
+    }
+
+    /** 按钮是 include 进来的布局，图标和文字在子 View 里 */
+    private void bindBtn(int id, String icon, String label, String alias) {
+        android.view.View root = findViewById(id);
+        if (root == null) return;
+        TextView ic = root.findViewById(R.id.btnIcon);
+        TextView lb = root.findViewById(R.id.btnLabel);
+        if (ic != null) ic.setText(icon);
+        if (lb != null) lb.setText(label);
+        root.setOnClickListener(v -> fire(alias, label));
     }
 
     private void fire(String alias, String label) {
