@@ -73,6 +73,19 @@ final class StatusStore {
             fos = new FileOutputStream(path, false);
             fos.write(content.getBytes(StandardCharsets.UTF_8));
             fos.flush();
+            fos.close();
+            fos = null;
+
+            // SELinux 上下文必须去掉 categories，
+            // 否则卡片进程（不同 c 标签）无权读取。
+            // 用 Runtime 调 chcon，失败只记录一次。
+            try {
+                Runtime.getRuntime().exec(new String[]{
+                        "/system/bin/chcon",
+                        "u:object_r:app_data_file:s0",
+                        path
+                }).waitFor();
+            } catch (Throwable ignored) { }
         } catch (Throwable t) {
             // 限流：同一分钟内只报一次，避免刷屏
             long now = System.currentTimeMillis();
