@@ -89,7 +89,7 @@ public final class BridgeServer {
     void onCloudStatus(String json) {
         try {
             // 先原样存档一份，便于分析真实格式
-            StatusStore.writeRawCloud(mCtx, json);
+            StatusStore.writeRawCloud(mCtx, "pick", json);
 
             VehicleStatus st = StatusJson.fromJson(json);
             if (st != null) {
