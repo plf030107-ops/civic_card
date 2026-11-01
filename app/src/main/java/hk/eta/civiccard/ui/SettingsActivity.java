@@ -184,7 +184,24 @@ public class SettingsActivity extends Activity {
 
         // 挂载到背屏
         findViewById(R.id.btnMount).setOnClickListener(v -> mountToRear());
+        findViewById(R.id.btnExportPack).setOnClickListener(v -> exportPack());
         refreshRearStatus();
+    }
+
+    // ---------------------------------------------------------- 卡片包导出
+
+    private void exportPack() {
+        new Thread(() -> {
+            final java.io.File f = hk.eta.civiccard.logic.CardPackBuilder.exportToPublic(this);
+            runOnUiThread(() -> {
+                if (f == null) {
+                    Toast.makeText(this, "导出失败", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(this, "已导出到 " + f.getAbsolutePath(),
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+        }).start();
     }
 
     // ---------------------------------------------------------- 背屏挂载
