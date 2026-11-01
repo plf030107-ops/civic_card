@@ -99,9 +99,9 @@ public class CardActivity extends Activity {
     }
 
     private void bindActions() {
-        bindBtn(R.id.btnUnlock, "○", "解锁", CommandSender.CMD_UNLOCK);
-        bindBtn(R.id.btnLock,   "●", "锁车", CommandSender.CMD_LOCK);
-        bindBtn(R.id.btnRefresh, "⟳", "刷新", null);
+        bindBtn(R.id.btnUnlock, "UNLOCK", "解锁", CommandSender.CMD_UNLOCK);
+        bindBtn(R.id.btnLock,   "LOCK", "锁车", CommandSender.CMD_LOCK);
+        bindBtn(R.id.btnRefresh, "SYNC", "刷新", null);
     }
 
     private void bindBtn(int id, String icon, String label, String alias) {
