@@ -114,8 +114,8 @@ public final class CardConfig {
 
     /** 卡片显示的状态项 key，最多 MAX_STATUS 个 */
     public static final int MAX_STATUS = 5;
-    /** 卡片功能槽位：2 行 × 2 列 = 4 个（背屏空间有限） */
-    public static final int SLOT_COUNT = 4;
+    /** 卡片功能槽位：2 列 × 3 行 = 6 个 */
+    public static final int SLOT_COUNT = 6;
     /** 长按防误触时长选项（毫秒） */
     public static final long[] LONG_PRESS_OPTIONS = {0, 500, 1000, 1500, 2000};
     public static final String[] LONG_PRESS_LABELS = {"关闭", "0.5 秒", "1 秒", "1.5 秒", "2 秒"};
@@ -133,7 +133,7 @@ public final class CardConfig {
 
     /** 默认功能：解锁、锁车、寻车、刷新 */
     public static FuncItem[] defaultFuncs() {
-        return new FuncItem[]{FUNC_UNLOCK, FUNC_LOCK, FUNC_SEARCH, FUNC_REFRESH};
+        return new FuncItem[]{FUNC_UNLOCK, FUNC_LOCK, FUNC_TRUNK_O, FUNC_SEARCH, FUNC_WIN_C, FUNC_REFRESH};
     }
 
     /** 按 key 找状态项 */
