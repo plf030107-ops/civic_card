@@ -16,23 +16,21 @@ import hk.eta.civiccard.logic.CommandSender;
 import hk.eta.civiccard.logic.VehicleStatus;
 
 /**
- * 背屏卡片主界面。
+ * 背屏卡片：只显示电压、总里程、剩余续航三项。
  *
- * 三条硬规则：
- *  1. 没有车况数据时显示「--」，绝不显示假的已锁车/关闭
- *  2. 所有操作都必须二次确认，防误触
- *  3. 不提供后备箱控制，避免误开
+ * 规则：
+ *  1. 缺失的字段显示「--」，绝不用 0 冒充真实值
+ *  2. 所有控车操作二次确认，防误触
+ *  3. 不提供后备箱控制
  */
 public class CardActivity extends Activity {
 
-    private static final long POLL_MS = 1500L;
+    private static final long POLL_MS = 2000L;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private boolean mRunning;
 
-    private TextView tvConn, tvLockIcon, tvLockState, tvTip;
-    private TextView tvFLStat, tvFRStat, tvRLStat, tvRRStat;
-    private TextView tvBattery, tvRange, tvTemp;
+    private TextView tvCarName, tvUpdate, tvRange, tvVoltage, tvMileage, tvTip;
 
     private VehicleStatus mLast;
     private long mLastTipTs;
@@ -58,26 +56,18 @@ public class CardActivity extends Activity {
     }
 
     private void bindViews() {
-        tvConn      = findViewById(R.id.tvConn);
-        tvLockIcon  = findViewById(R.id.tvLockIcon);
-        tvLockState = findViewById(R.id.tvLockState);
-        tvTip       = findViewById(R.id.tvTip);
-        tvFLStat    = findViewById(R.id.tvFLStat);
-        tvFRStat    = findViewById(R.id.tvFRStat);
-        tvRLStat    = findViewById(R.id.tvRLStat);
-        tvRRStat    = findViewById(R.id.tvRRStat);
-        tvBattery   = findViewById(R.id.tvBattery);
-        tvRange     = findViewById(R.id.tvRange);
-        tvTemp      = findViewById(R.id.tvTemp);
-
-        renderUnknown();
+        tvCarName = findViewById(R.id.tvCarName);
+        tvUpdate  = findViewById(R.id.tvUpdate);
+        tvRange   = findViewById(R.id.tvRange);
+        tvVoltage = findViewById(R.id.tvVoltage);
+        tvMileage = findViewById(R.id.tvMileage);
+        tvTip     = findViewById(R.id.tvTip);
     }
 
-    /** 只有解锁、上锁、寻车三个操作，不含后备箱 */
     private void bindActions() {
         bindBtn(R.id.btnUnlock, "🔓", "解锁", CommandSender.CMD_UNLOCK);
         bindBtn(R.id.btnLock,   "🔒", "上锁", CommandSender.CMD_LOCK);
-        bindBtn(R.id.btnFind,   "📍", "寻车", CommandSender.CMD_SEARCH);
+        bindBtn(R.id.btnRefresh, "⟳", "刷新", null);   // 本地刷新，不下发指令
     }
 
     private void bindBtn(int id, String icon, String label, String alias) {
@@ -87,45 +77,32 @@ public class CardActivity extends Activity {
         TextView lb = root.findViewById(R.id.btnLabel);
         if (ic != null) ic.setText(icon);
         if (lb != null) lb.setText(label);
-        root.setOnClickListener(v -> confirmThenFire(alias, label));
+        root.setOnClickListener(v -> {
+            if (alias == null) {
+                refresh();
+                showTip("已刷新");
+            } else {
+                confirmThenFire(alias, label);
+            }
+        });
     }
 
-    // ------------------------------------------------------------ 二次确认
-
-    /**
-     * 所有操作统一走这里：先弹确认框，确认后才下发。
-     * 背屏误触成本高（可能直接开车门），必须拦一道。
-     */
     private void confirmThenFire(String alias, String label) {
         String block = mLast != null ? mLast.preconditionBlockReason(alias) : null;
-
-        StringBuilder msg = new StringBuilder();
-        msg.append("确定要").append(label).append("吗？");
+        StringBuilder msg = new StringBuilder("确定要").append(label).append("吗？");
         if (block != null) {
             msg.append("\n\n注意：车辆当前").append(block).append("，可能无法执行。");
         }
-
         new AlertDialog.Builder(this)
                 .setTitle(label)
                 .setMessage(msg.toString())
-                .setPositiveButton("确定", (d, w) -> {
-                    d.dismiss();
-                    doFire(alias, label);
-                })
-                .setNegativeButton("取消", (d, w) -> {
-                    d.dismiss();
-                    showTip("已取消");
-                })
-                .setCancelable(true)
+                .setPositiveButton("确定", (d, w) -> { d.dismiss(); doFire(alias, label); })
+                .setNegativeButton("取消", (d, w) -> { d.dismiss(); showTip("已取消"); })
                 .show();
     }
 
     private void doFire(String alias, String label) {
-        if (mLast == null) {
-            showTip("暂无车况，无法操作");
-            return;
-        }
-        String block = mLast.preconditionBlockReason(alias);
+        String block = mLast != null ? mLast.preconditionBlockReason(alias) : null;
         if (block != null) {
             showTip(label + "：" + block);
             return;
@@ -137,126 +114,45 @@ public class CardActivity extends Activity {
     private void showTip(String s) {
         mLastTipTs = System.currentTimeMillis();
         tvTip.setText(s);
-        tvTip.setTextColor(getColor(R.color.text_secondary));
     }
 
     // ------------------------------------------------------------ 刷新
 
     private void refresh() {
-        boolean ready = BridgeReader.isReady();
-        tvConn.setText(ready ? "● 已连接" : "● 未连接");
-        tvConn.setTextColor(getColor(ready ? R.color.ok : R.color.text_muted));
-
         VehicleStatus st = BridgeReader.readStatus();
         if (st == null) {
-            renderUnknown();
-            showResultIfAny();
+            tvRange.setText("--");
+            tvVoltage.setText("--");
+            tvMileage.setText("--");
+            tvUpdate.setText("更新 --");
             return;
         }
         mLast = st;
-        renderLock(st);
-        renderDoors(st);
-        renderEnergy(st);
-        showResultIfAny();
+
+        // 剩余续航
+        int km = st.hasRemainMileage ? st.continuationMileage : 0;
+        tvRange.setText(km > 0 ? String.valueOf(km) : "--");
+
+        // 电压
+        tvVoltage.setText(st.hasVoltage && st.voltage > 0
+                ? String.format(Locale.US, "%.1f", st.voltage) : "--");
+
+        // 总里程
+        tvMileage.setText(st.hasTotalMileage && st.totalMileage > 0
+                ? String.valueOf((int) st.totalMileage) : "--");
+
+        // 更新时间
+        tvUpdate.setText(ageText(st.timestampMs));
     }
 
-    private void renderUnknown() {
-        tvLockIcon.setText("🚗");
-        tvLockState.setText("暂无车况");
-        tvLockState.setTextColor(getColor(R.color.text_muted));
-        setUnknown(tvFLStat);
-        setUnknown(tvFRStat);
-        setUnknown(tvRLStat);
-        setUnknown(tvRRStat);
-        tvBattery.setText("--%");
-        tvRange.setText("-- km");
-        tvTemp.setText("--°C");
-    }
-
-    private void setUnknown(TextView tv) {
-        tv.setText("--");
-        tv.setTextColor(getColor(R.color.text_muted));
-    }
-
-    private void renderLock(VehicleStatus st) {
-        if (!st.hasDoorLock) {
-            // 云端数据暂无门锁位，明确显示未知
-            tvLockIcon.setText("🚗");
-            tvLockState.setText("状态未知");
-            tvLockState.setTextColor(getColor(R.color.text_muted));
-            return;
-        }
-        boolean locked = st.doorsLocked();
-        tvLockState.setText(locked ? "已锁车" : "未锁车");
-        tvLockState.setTextColor(getColor(locked ? R.color.ok : R.color.warn));
-        tvLockIcon.setText(locked ? "🔒" : "🔓");
-    }
-
-    private void renderDoors(VehicleStatus st) {
-        if (!st.hasDoor && !st.hasWindow) {
-            setUnknown(tvFLStat);
-            setUnknown(tvFRStat);
-            setUnknown(tvRLStat);
-            setUnknown(tvRRStat);
-            return;
-        }
-        setDoor(tvFLStat, st.frontLeftDoor, st.frontLeftWindow);
-        setDoor(tvFRStat, st.frontRightDoor, st.frontRightWindow);
-        setDoor(tvRLStat, st.rearLeftDoor, st.rearLeftWindow);
-        setDoor(tvRRStat, st.rearRightDoor, st.rearRightWindow);
-    }
-
-    private void setDoor(TextView tv, int door, int window) {
-        if (door == 1) {
-            tv.setText("门开");
-            tv.setTextColor(getColor(R.color.danger));
-        } else if (window == 1) {
-            tv.setText("窗开");
-            tv.setTextColor(getColor(R.color.warn));
-        } else {
-            tv.setText("关");
-            tv.setTextColor(getColor(R.color.text_primary));
-        }
-    }
-
-    private void renderEnergy(VehicleStatus st) {
-        tvBattery.setText(st.hasBattery && st.batteryPercentage > 0
-                ? st.batteryPercentage + "%" : "--%");
-
-        int km = 0;
-        if (st.hasRemainMileage && st.continuationMileage > 0) {
-            km = st.continuationMileage;
-        } else if (st.hasTotalMileage && st.remainLMileage > 0) {
-            km = st.remainLMileage;
-        }
-        tvRange.setText(km > 0 ? km + " km" : "-- km");
-
-        tvTemp.setText(st.hasTempInside && st.temperatureInside > -39.0
-                ? String.format(Locale.US, "%.0f°C", st.temperatureInside) : "--°C");
-    }
-
-    private void showResultIfAny() {
-        String r = BridgeReader.readLastResult();
-        if (r == null) return;
-        String[] p = r.split("\t");
-        if (p.length < 2) return;
-        long ts;
-        try { ts = Long.parseLong(p[0]); } catch (NumberFormatException e) { return; }
-        if (System.currentTimeMillis() - ts > 5000) return;
-        if (System.currentTimeMillis() - mLastTipTs < 800) return;
-
-        String kind = p[1];
-        String detail = p.length > 2 ? p[2] : "";
-        if ("BLOCKED".equals(kind)) {
-            tvTip.setText(detail);
-            tvTip.setTextColor(getColor(R.color.warn));
-        } else if ("FAIL".equals(kind) || "ERROR".equals(kind)) {
-            tvTip.setText("失败");
-            tvTip.setTextColor(getColor(R.color.danger));
-        } else if ("OK".equals(kind)) {
-            tvTip.setText("已执行");
-            tvTip.setTextColor(getColor(R.color.ok));
-        }
+    /** 显示「更新 3 分钟前」这类相对时间 */
+    private String ageText(long ts) {
+        if (ts <= 0) return "更新 --";
+        long sec = (System.currentTimeMillis() - ts) / 1000L;
+        if (sec < 60) return "刚刚更新";
+        if (sec < 3600) return "更新 " + (sec / 60) + " 分钟前";
+        if (sec < 86400) return "更新 " + (sec / 3600) + " 小时前";
+        return "更新 " + (sec / 86400) + " 天前";
     }
 
     @Override
