@@ -10,9 +10,10 @@ import java.nio.charset.StandardCharsets;
 /**
  * 卡片侧读取桥数据。
  *
- * 【关键】乘趣进程写出的文件带 SELinux categories（如 c122,c257,...），
- * 卡片进程的 categories 不同（c152,...），直接读会被拒绝。
- * 因此统一走 root（cards 有 su 权限）读取，这是唯一可靠路径。
+ * 乘趣进程写出的文件带 SELinux categories，卡片进程直接读会被拒绝，
+ * 因此优先走 root（su）读取。
+ *
+ * 文件时间统一用 root 的 stat 取，避免 File.lastModified 因权限失败。
  */
 public final class BridgeReader {
 
@@ -38,21 +39,38 @@ public final class BridgeReader {
         return readAll(F_RESULT);
     }
 
+    /**
+     * 数据距今多久（毫秒）。
+     *
+     * 优先用 root stat 取文件 mtime；
+     * 全部失败返回 Long.MAX_VALUE。
+     */
     public static long statusAgeMs() {
-        String s = shell("stat -c %Y " + F_STATUS);
-        if (s == null) return Long.MAX_VALUE;
-        try {
-            long sec = Long.parseLong(s.trim());
-            if (sec <= 0) return Long.MAX_VALUE;
-            return System.currentTimeMillis() - sec * 1000L;
-        } catch (NumberFormatException e) {
-            return Long.MAX_VALUE;
+        // 1) root stat
+        String out = shell("stat -c %Y " + F_STATUS);
+        if (out != null && !out.isEmpty()) {
+            try {
+                long sec = Long.parseLong(out.trim());
+                if (sec > 0) {
+                    return Math.max(0, System.currentTimeMillis() - sec * 1000L);
+                }
+            } catch (NumberFormatException ignored) { }
         }
+
+        // 2) 退而用 Java 的 file mtime（可能因权限拿不到）
+        try {
+            File f = new File(F_STATUS);
+            long t = f.lastModified();
+            if (t > 0) {
+                return Math.max(0, System.currentTimeMillis() - t);
+            }
+        } catch (Throwable ignored) { }
+
+        return Long.MAX_VALUE;
     }
 
     // ------------------------------------------------------------ 读取
 
-    /** 优先 root，失败退回直读 */
     private static String readAll(String path) {
         String s = shell("cat " + path);
         if (s != null && !s.isEmpty()) return s;
