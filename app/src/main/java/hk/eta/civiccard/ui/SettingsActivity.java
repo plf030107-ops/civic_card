@@ -68,7 +68,9 @@ public class SettingsActivity extends Activity {
         spLong1 = findViewById(R.id.spFunc1);
         spLong2 = findViewById(R.id.spFunc2);
         spLong3 = findViewById(R.id.spFunc3);
-        mFuncSpinners = new Spinner[]{spLong0, spLong1, spLong2, spLong3};
+        Spinner spLong4 = findViewById(R.id.spFunc4);
+        Spinner spLong5 = findViewById(R.id.spFunc5);
+        mFuncSpinners = new Spinner[]{spLong0, spLong1, spLong2, spLong3, spLong4, spLong5};
 
         spLongPress = findViewById(R.id.spLongPress);
         spTest = findViewById(R.id.spTest);
