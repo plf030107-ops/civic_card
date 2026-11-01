@@ -129,26 +129,24 @@ public class CardActivity extends Activity {
         }
         mLast = st;
 
-        // 剩余续航
         int km = st.hasRemainMileage ? st.continuationMileage : 0;
         tvRange.setText(km > 0 ? String.valueOf(km) : "--");
 
-        // 电压
         tvVoltage.setText(st.hasVoltage && st.voltage > 0
                 ? String.format(Locale.US, "%.1f", st.voltage) : "--");
 
-        // 总里程
         tvMileage.setText(st.hasTotalMileage && st.totalMileage > 0
                 ? String.valueOf((int) st.totalMileage) : "--");
 
-        // 更新时间
-        tvUpdate.setText(ageText(st.timestampMs));
+        // 用文件最后修改时间判断新鲜度：
+        // 乘趣进程的时区与本地不同，JSON 里的 ts 会偏差数小时，不可用。
+        tvUpdate.setText(ageText(BridgeReader.statusAgeMs()));
     }
 
-    /** 显示「更新 3 分钟前」这类相对时间 */
-    private String ageText(long ts) {
-        if (ts <= 0) return "更新 --";
-        long sec = (System.currentTimeMillis() - ts) / 1000L;
+    /** 按距今毫秒数显示相对时间 */
+    private String ageText(long ageMs) {
+        if (ageMs == Long.MAX_VALUE || ageMs < 0) return "更新 --";
+        long sec = ageMs / 1000L;
         if (sec < 60) return "刚刚更新";
         if (sec < 3600) return "更新 " + (sec / 60) + " 分钟前";
         if (sec < 86400) return "更新 " + (sec / 3600) + " 小时前";
