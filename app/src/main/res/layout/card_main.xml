@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  背屏卡片 —— 内容由配置动态生成
-  状态区：按用户所选状态项渲染
-  功能区：2×2 槽位，按用户绑定渲染
+  背屏卡片：车模图 + 三项数据（电压 / 总里程 / 剩余续航）
+  自适应主屏(1200x2608)与背屏(976x596)
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -17,16 +16,16 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#B3000000" />
+        android:background="#99000000" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:paddingStart="22dp"
-        android:paddingEnd="22dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp">
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp">
 
         <!-- 顶栏 -->
         <LinearLayout
@@ -55,35 +54,154 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- 状态区：动态填充 -->
+        <!-- 车模图 + 数据（水平排布，车图在左，数据在右） -->
         <LinearLayout
-            android:id="@+id/llStatus"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical" />
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <!-- 功能区 2×2 动态填充 -->
+            <ImageView
+                android:id="@+id/ivCar"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="5"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="4"
+                android:orientation="vertical">
+
+                <!-- 剩余续航 -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvRange"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--"
+                        android:textColor="#FFF2F5F8"
+                        android:textSize="38sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="km"
+                        android:textColor="#FF97A3B0"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="剩余续航"
+                    android:textColor="#FF5F6B78"
+                    android:textSize="10sp" />
+
+                <!-- 电压 / 总里程 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvVoltage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textColor="#FFF2F5F8"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="电压 V"
+                            android:textColor="#FF5F6B78"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvMileage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="--"
+                            android:textColor="#FFF2F5F8"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="里程 km"
+                            android:textColor="#FF5F6B78"
+                            android:textSize="9sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 三个按钮 -->
         <LinearLayout
-            android:id="@+id/llFuncRow1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal" />
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
 
-        <LinearLayout
-            android:id="@+id/llFuncRow2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal" />
+            <include
+                android:id="@+id/btnUnlock"
+                layout="@layout/item_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <include
+                android:id="@+id/btnLock"
+                layout="@layout/item_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/btn_gap"
+                android:layout_weight="1" />
+
+            <include
+                android:id="@+id/btnRefresh"
+                layout="@layout/item_btn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/btn_gap"
+                android:layout_weight="1" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvTip"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="4dp"
             android:gravity="center"
             android:maxLines="1"
             android:text=""
