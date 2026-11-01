@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  背屏卡片 —— 只显示三项：电压 / 总里程 / 剩余续航
-  自适应主屏(1200x2608)与背屏(976x596)
+  背屏卡片 —— 内容由配置动态生成
+  状态区：按用户所选状态项渲染
+  功能区：2×2 槽位，按用户绑定渲染
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/bg_card">
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/ivBg"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B3000000" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,8 +25,8 @@
         android:orientation="vertical"
         android:paddingStart="22dp"
         android:paddingEnd="22dp"
-        android:paddingTop="18dp"
-        android:paddingBottom="18dp">
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
         <!-- 顶栏 -->
         <LinearLayout
@@ -31,7 +42,7 @@
                 android:layout_weight="1"
                 android:singleLine="true"
                 android:text="我的思域"
-                android:textColor="@color/text_primary"
+                android:textColor="#FFF2F5F8"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
@@ -40,146 +51,33 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="更新 --"
-                android:textColor="@color/text_muted"
+                android:textColor="#FF97A3B0"
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- 三项数据：电压 / 总里程 / 剩余续航 -->
+        <!-- 状态区：动态填充 -->
         <LinearLayout
+            android:id="@+id/llStatus"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical" />
 
-            <!-- 剩余续航（主数字） -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical|center_horizontal"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tvRange"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="--"
-                    android:textColor="@color/text_primary"
-                    android:textSize="52sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="6dp"
-                    android:text="km"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="16sp" />
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="剩余续航"
-                android:textColor="@color/text_muted"
-                android:textSize="11sp" />
-
-            <!-- 分隔 -->
-            <View
-                android:layout_width="180dp"
-                android:layout_height="1dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
-                android:background="@color/divider" />
-
-            <!-- 电压 / 总里程 -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvVoltage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="--"
-                        android:textColor="@color/text_primary"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="电瓶电压 V"
-                        android:textColor="@color/text_muted"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvMileage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="--"
-                        android:textColor="@color/text_primary"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="总里程 km"
-                        android:textColor="@color/text_muted"
-                        android:textSize="10sp" />
-                </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- 三个按钮 -->
+        <!-- 功能区 2×2 动态填充 -->
         <LinearLayout
+            android:id="@+id/llFuncRow1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal" />
 
-            <include
-                android:id="@+id/btnUnlock"
-                layout="@layout/item_btn"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" />
-
-            <include
-                android:id="@+id/btnLock"
-                layout="@layout/item_btn"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/btn_gap"
-                android:layout_weight="1" />
-
-            <include
-                android:id="@+id/btnRefresh"
-                layout="@layout/item_btn"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/btn_gap"
-                android:layout_weight="1" />
-        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/llFuncRow2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal" />
 
         <TextView
             android:id="@+id/tvTip"
@@ -189,7 +87,7 @@
             android:gravity="center"
             android:maxLines="1"
             android:text=""
-            android:textColor="@color/text_muted"
+            android:textColor="#FF97A3B0"
             android:textSize="10sp" />
     </LinearLayout>
 </FrameLayout>
