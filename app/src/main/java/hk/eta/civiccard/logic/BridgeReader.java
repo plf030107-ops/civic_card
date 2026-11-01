@@ -47,12 +47,14 @@ public final class BridgeReader {
      */
     public static long statusAgeMs() {
         // 1) root stat
-        String out = shell("stat -c %Y " + F_STATUS);
+        String out = shell("cat " + DIR + "/last_write_ms");
         if (out != null && !out.isEmpty()) {
             try {
                 long sec = Long.parseLong(out.trim());
                 if (sec > 0) {
-                    return Math.max(0, System.currentTimeMillis() - sec * 1000L);
+                    // last_write_ms 存的是毫秒，直接比较
+                    long age = System.currentTimeMillis() - sec;
+                    return age < 0 ? 0 : age;
                 }
             } catch (NumberFormatException ignored) { }
         }
