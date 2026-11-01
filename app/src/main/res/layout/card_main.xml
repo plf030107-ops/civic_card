@@ -59,16 +59,23 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.6" />
+            android:layout_weight="0.15" />
 
-        <!-- 车模图 -->
-        <ImageView
-            android:id="@+id/ivCar"
+        <!-- 车模图：外层容器限制高度，图片完整显示 -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="4"
-            android:adjustViewBounds="false"
-            android:scaleType="fitCenter" />
+            android:layout_weight="5"
+            android:minHeight="120dp">
+
+            <ImageView
+                android:id="@+id/ivCar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter" />
+        </FrameLayout>
 
         <!-- 数据行：三列等宽 -->
         <LinearLayout
@@ -171,7 +178,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.6" />
+            android:layout_weight="0.15" />
 
         <!-- 三个按钮 -->
         <LinearLayout
