@@ -17,6 +17,7 @@ public final class ConfigStore {
     private static final String K_FUNC_PREFIX = "func_";      // func_0..3 = label
     private static final String K_LONG_PRESS = "long_press_ms";
     private static final String K_BG = "bg_path";
+    private static final String K_MODEL_URL = "model_url";
 
     private ConfigStore() {}
 
@@ -86,5 +87,15 @@ public final class ConfigStore {
 
     public static void resetBg(Context c) {
         sp(c).edit().remove(K_BG).apply();
+    }
+
+    // ---------------------------------------------------------- 车模图
+
+    public static String getModelUrl(Context c) {
+        return sp(c).getString(K_MODEL_URL, null);
+    }
+
+    public static void setModelUrl(Context c, String url) {
+        sp(c).edit().putString(K_MODEL_URL, url).apply();
     }
 }
