@@ -59,16 +59,16 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.1" />
+            android:layout_weight="0.6" />
 
         <!-- 车模图 -->
         <ImageView
             android:id="@+id/ivCar"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="7"
+            android:layout_weight="4"
             android:adjustViewBounds="false"
-            android:scaleType="centerInside" />
+            android:scaleType="fitCenter" />
 
         <!-- 数据行：三列等宽 -->
         <LinearLayout
@@ -171,7 +171,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.1" />
+            android:layout_weight="0.6" />
 
         <!-- 三个按钮 -->
         <LinearLayout
