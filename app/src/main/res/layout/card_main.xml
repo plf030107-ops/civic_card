@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   背屏卡片：车模图 + 三项数据（电压 / 总里程 / 剩余续航）
-  自适应主屏(1200x2608)与背屏(976x596)
+  自适应主屏与背屏；内容垂直分布，不留大片空白
 -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -18,14 +18,15 @@
         android:layout_height="match_parent"
         android:background="#99000000" />
 
+    <!-- 主容器：顶栏 / 车图+数据(占满) / 按钮 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp">
+        android:paddingStart="22dp"
+        android:paddingEnd="22dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp">
 
         <!-- 顶栏 -->
         <LinearLayout
@@ -42,7 +43,7 @@
                 android:singleLine="true"
                 android:text="我的思域"
                 android:textColor="#FFF2F5F8"
-                android:textSize="15sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -54,31 +55,35 @@
                 android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- 车模图 + 数据（水平排布，车图在左，数据在右） -->
-        <LinearLayout
+        <!-- 弹性空白，视觉上把内容推向中部偏上 -->
+        <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginTop="6dp"
-            android:gravity="center_vertical"
+            android:layout_weight="1" />
+
+        <!-- 车模图 -->
+        <ImageView
+            android:id="@+id/ivCar"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="3"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter" />
+
+        <!-- 数据行：三列等宽 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
             android:orientation="horizontal">
 
-            <ImageView
-                android:id="@+id/ivCar"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="5"
-                android:adjustViewBounds="true"
-                android:scaleType="fitCenter" />
-
+            <!-- 剩余续航（主项） -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_weight="4"
+                android:layout_weight="1.3"
                 android:orientation="vertical">
 
-                <!-- 剩余续航 -->
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -90,87 +95,88 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="--"
-                        android:textColor="#FFF2F5F8"
-                        android:textSize="38sp"
+                        android:textColor="#FFFFFFFF"
+                        android:textSize="42sp"
                         android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="4dp"
+                        android:layout_marginStart="5dp"
                         android:text="km"
                         android:textColor="#FF97A3B0"
-                        android:textSize="13sp" />
+                        android:textSize="14sp" />
                 </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="剩余续航"
-                    android:textColor="#FF5F6B78"
-                    android:textSize="10sp" />
+                    android:textColor="#FF7A8794"
+                    android:textSize="11sp" />
+            </LinearLayout>
 
-                <!-- 电压 / 总里程 -->
-                <LinearLayout
-                    android:layout_width="match_parent"
+            <!-- 电压 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvVoltage"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:orientation="horizontal">
+                    android:text="--"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="26sp"
+                    android:textStyle="bold" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="电压 V"
+                    android:textColor="#FF7A8794"
+                    android:textSize="11sp" />
+            </LinearLayout>
 
-                        <TextView
-                            android:id="@+id/tvVoltage"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="--"
-                            android:textColor="#FFF2F5F8"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
+            <!-- 总里程 -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1.2"
+                android:gravity="center_vertical"
+                android:orientation="vertical">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="电压 V"
-                            android:textColor="#FF5F6B78"
-                            android:textSize="9sp" />
-                    </LinearLayout>
+                <TextView
+                    android:id="@+id/tvMileage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="--"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="26sp"
+                    android:textStyle="bold" />
 
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/tvMileage"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="--"
-                            android:textColor="#FFF2F5F8"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="里程 km"
-                            android:textColor="#FF5F6B78"
-                            android:textSize="9sp" />
-                    </LinearLayout>
-                </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="总里程 km"
+                    android:textColor="#FF7A8794"
+                    android:textSize="11sp" />
             </LinearLayout>
         </LinearLayout>
+
+        <!-- 弹性空白 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <!-- 三个按钮 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
             android:orientation="horizontal">
 
             <include
