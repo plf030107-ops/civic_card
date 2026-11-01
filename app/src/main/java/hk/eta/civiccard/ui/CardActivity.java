@@ -99,8 +99,8 @@ public class CardActivity extends Activity {
     }
 
     private void bindActions() {
-        bindBtn(R.id.btnUnlock, "🔓", "解锁", CommandSender.CMD_UNLOCK);
-        bindBtn(R.id.btnLock,   "🔒", "锁车", CommandSender.CMD_LOCK);
+        bindBtn(R.id.btnUnlock, "○", "解锁", CommandSender.CMD_UNLOCK);
+        bindBtn(R.id.btnLock,   "●", "锁车", CommandSender.CMD_LOCK);
         bindBtn(R.id.btnRefresh, "⟳", "刷新", null);
     }
 
