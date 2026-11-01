@@ -35,6 +35,11 @@ public final class BridgeReader {
         return StatusJson.fromJson(json);
     }
 
+    /** 读任意桥文件文本 */
+    public static String readAllText(String path) {
+        return readAll(path);
+    }
+
     public static String readLastResult() {
         return readAll(F_RESULT);
     }
