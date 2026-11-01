@@ -14,7 +14,6 @@ import android.widget.CheckBox;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -182,6 +181,51 @@ public class SettingsActivity extends Activity {
 
         findViewById(R.id.btnPreview).setOnClickListener(v ->
                 startActivity(new Intent(this, CardActivity.class)));
+
+        // 挂载到背屏
+        findViewById(R.id.btnMount).setOnClickListener(v -> mountToRear());
+        refreshRearStatus();
+    }
+
+    // ---------------------------------------------------------- 背屏挂载
+
+    private void refreshRearStatus() {
+        TextView tv = findViewById(R.id.tvRearStatus);
+        boolean host = RearWidgetRegistrar.isHostAvailable(this);
+        boolean perm = RearWidgetRegistrar.hasPermission(this);
+        StringBuilder sb = new StringBuilder();
+        sb.append(host ? "✓ REAREye 已安装" : "✗ 未安装 REAREye");
+        sb.append(host && perm ? "　✓ 卡片权限已授予" : "　✗ 缺少卡片权限");
+        tv.setText(sb.toString());
+    }
+
+    /**
+     * 挂载到背屏。
+     *
+     * REAREye 通过扫描应用 meta-data 发现卡片，
+     * 所以这里直接打开它的卡片列表页，用户点一下即可添加。
+     */
+    private void mountToRear() {
+        if (!RearWidgetRegistrar.isHostAvailable(this)) {
+            Toast.makeText(this, "未安装 REAREye", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (!RearWidgetRegistrar.hasPermission(this)) {
+            Toast.makeText(this, "缺少 ACCESS_REAR_WIDGET_API 权限", Toast.LENGTH_LONG).show();
+            return;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("挂载到背屏")
+                .setMessage("将打开 REAREye 卡片列表。\n\n"
+                        + "在列表中找到「" + RearWidgetRegistrar.WIDGET_NAME + "」，\n"
+                        + "点一下即可添加到背屏。\n\n"
+                        + "之后可在 REAREye 里随时移除，恢复原生背屏。")
+                .setPositiveButton("打开 REAREye", (d, w) -> {
+                    d.dismiss();
+                    RearWidgetRegistrar.openHostSettings(this);
+                })
+                .setNegativeButton("取消", null)
+                .show();
     }
 
     // ---------------------------------------------------------- 背景
