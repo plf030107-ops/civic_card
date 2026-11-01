@@ -1,0 +1,185 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  乘趣控车背屏卡片 —— MAML V2
+
+  数据流：
+    App  --广播 hk.eta.civiccard.NATIVE_STATUS-->  卡片
+    卡片 --广播 hk.eta.civiccard.NATIVE_CONTROL--> App
+
+  只显示三项真实数据：剩余续航 / 电压 / 总里程
+-->
+<Widget frameRate="0" scaleByDensity="false" screenWidth="1080" version="2" useVariableUpdater="DateTime.Second">
+
+  <Var name="scale" type="number" expression="#view_width/336" />
+
+  <!-- 数据变量 -->
+  <Var name="status" type="string" expression="'点击刷新获取车况'" const="true" />
+  <Var name="model" type="string" expression="'思域'" const="true" />
+  <Var name="range" type="string" expression="'--'" const="true" />
+  <Var name="voltage" type="string" expression="'--'" const="true" />
+  <Var name="mileage" type="string" expression="'--'" const="true" />
+  <Var name="updated" type="string" expression="'--'" const="true" />
+  <Var name="dataObj" type="jsonO" expression="newJsonObject()" const="true" />
+
+  <!-- 发送指令 -->
+  <Function name="send">
+    <VariableCommand name="status" expression="'正在发送…'" type="string" />
+    <IntentCommand action="hk.eta.civiccard.NATIVE_CONTROL"
+                   package="hk.eta.civiccard"
+                   class="hk.eta.civiccard.CardReceiver"
+                   broadcast="true">
+      <Extra name="command" type="string" expression="@cmd" />
+    </IntentCommand>
+  </Function>
+
+  <!-- 解析车况 -->
+  <Function name="parse">
+    <VariableCommand name="dataObj" expression="strToJson(@data)" type="jsonO" />
+    <VariableCommand name="status" expression="jsonGetString($dataObj,'status')" type="string" />
+    <VariableCommand name="model" expression="jsonGetString($dataObj,'model')" type="string" />
+    <VariableCommand name="range" expression="jsonGetString($dataObj,'range')" type="string" />
+    <VariableCommand name="voltage" expression="jsonGetString($dataObj,'voltage')" type="string" />
+    <VariableCommand name="mileage" expression="jsonGetString($dataObj,'mileage')" type="string" />
+    <VariableCommand name="updated" expression="jsonGetString($dataObj,'updated')" type="string" />
+  </Function>
+
+  <!-- 接收 App 推送的车况 -->
+  <VariableBinders>
+    <BroadcastBinder action="hk.eta.civiccard.NATIVE_STATUS">
+      <Variable name="data" type="string" extra="data" />
+      <Trigger><FunctionCommand target="parse" /></Trigger>
+    </BroadcastBinder>
+  </VariableBinders>
+
+  <!-- 生命周期：初始化时主动拉一次车况 -->
+  <ExternalCommands>
+    <Trigger action="init">
+      <VariableCommand name="cmd" expression="'REFRESH'" type="string" />
+      <FunctionCommand target="send" />
+    </Trigger>
+    <Trigger action="resume">
+      <VariableCommand name="cmd" expression="'REFRESH'" type="string" />
+      <FunctionCommand target="send" />
+    </Trigger>
+  </ExternalCommands>
+
+  <!-- ================= 背景 ================= -->
+  <Image src="background.png" x="0" y="0" w="#view_width" h="#view_height" />
+
+  <!-- ================= 顶部：车型 + 更新时间 ================= -->
+  <Text x="#view_width*0.05" y="#view_height*0.06"
+        textExp="@model" size="15*#scale" color="#142936" />
+  <Text x="#view_width*0.05" y="#view_height*0.145"
+        textExp="'更新于 '+@updated" size="7*#scale" color="#536F7A" />
+
+  <!-- ================= 车模图 ================= -->
+  <Image name="car_pic" src="car_image.png"
+         x="#view_width*0.55" y="#view_height*0.30"
+         align="center" alignV="center"
+         w="#car_pic.bmp_width*min(#view_width*0.40/max(1,#car_pic.bmp_width),#view_height*0.30/max(1,#car_pic.bmp_height))"
+         h="#car_pic.bmp_height*min(#view_width*0.40/max(1,#car_pic.bmp_width),#view_height*0.30/max(1,#car_pic.bmp_height))" />
+
+  <!-- ================= 三项数据 ================= -->
+  <!-- 剩余续航（主项） -->
+  <Text x="#view_width*0.05" y="#view_height*0.28"
+        textExp="@range" size="30*#scale" color="#142936" />
+  <Text x="#view_width*0.05" y="#view_height*0.40"
+        textExp="'剩余续航 km'" size="7*#scale" color="#536F7A" />
+
+  <!-- 电压 -->
+  <Text x="#view_width*0.05" y="#view_height*0.50"
+        textExp="@voltage" size="15*#scale" color="#142936" />
+  <Text x="#view_width*0.05" y="#view_height*0.585"
+        textExp="'电瓶电压 V'" size="7*#scale" color="#536F7A" />
+
+  <!-- 总里程 -->
+  <Text x="#view_width*0.22" y="#view_height*0.50"
+        textExp="@mileage" size="15*#scale" color="#142936" />
+  <Text x="#view_width*0.22" y="#view_height*0.585"
+        textExp="'总里程 km'" size="7*#scale" color="#536F7A" />
+
+  <!-- 状态提示 -->
+  <Text x="#view_width*0.05" y="#view_height*0.66"
+        textExp="@status" size="7*#scale" color="#334E5C"
+        w="#view_width*0.45" />
+
+  <!-- ================= 三个按钮 ================= -->
+  <!-- 解锁 -->
+  <Button x="#view_width*0.05" y="#view_height*0.74"
+          w="#view_width*0.27" h="#view_height*0.18"
+          alignChildren="true" interceptTouch="true" haptic="true">
+    <Triggers>
+      <Trigger action="up">
+        <VariableCommand name="cmd" expression="'UNLOCK'" type="string" />
+        <FunctionCommand target="send" />
+      </Trigger>
+    </Triggers>
+    <Normal>
+      <Image src="tile.png" w="#view_width*0.27" h="#view_height*0.18" alpha="255" />
+      <Image src="unlock.webp" x="#view_width*0.135" y="#view_height*0.012"
+             align="center" w="#view_height*0.09" h="#view_height*0.09" />
+      <Text x="#view_width*0.135" y="#view_height*0.135" align="center" alignV="center"
+            text="解锁" size="7.5*#scale" color="#102634" />
+    </Normal>
+    <Pressed>
+      <Image src="tile.png" w="#view_width*0.27" h="#view_height*0.18" alpha="180" />
+      <Image src="unlock.webp" x="#view_width*0.135" y="#view_height*0.012"
+             align="center" w="#view_height*0.09" h="#view_height*0.09" />
+      <Text x="#view_width*0.135" y="#view_height*0.135" align="center" alignV="center"
+            text="解锁" size="7.5*#scale" color="#102634" />
+    </Pressed>
+  </Button>
+
+  <!-- 锁车 -->
+  <Button x="#view_width*0.365" y="#view_height*0.74"
+          w="#view_width*0.27" h="#view_height*0.18"
+          alignChildren="true" interceptTouch="true" haptic="true">
+    <Triggers>
+      <Trigger action="up">
+        <VariableCommand name="cmd" expression="'LOCK'" type="string" />
+        <FunctionCommand target="send" />
+      </Trigger>
+    </Triggers>
+    <Normal>
+      <Image src="tile.png" w="#view_width*0.27" h="#view_height*0.18" alpha="255" />
+      <Image src="lock.webp" x="#view_width*0.135" y="#view_height*0.012"
+             align="center" w="#view_height*0.09" h="#view_height*0.09" />
+      <Text x="#view_width*0.135" y="#view_height*0.135" align="center" alignV="center"
+            text="锁车" size="7.5*#scale" color="#102634" />
+    </Normal>
+    <Pressed>
+      <Image src="tile.png" w="#view_width*0.27" h="#view_height*0.18" alpha="180" />
+      <Image src="lock.webp" x="#view_width*0.135" y="#view_height*0.012"
+             align="center" w="#view_height*0.09" h="#view_height*0.09" />
+      <Text x="#view_width*0.135" y="#view_height*0.135" align="center" alignV="center"
+            text="锁车" size="7.5*#scale" color="#102634" />
+    </Pressed>
+  </Button>
+
+  <!-- 刷新 -->
+  <Button x="#view_width*0.68" y="#view_height*0.74"
+          w="#view_width*0.27" h="#view_height*0.18"
+          alignChildren="true" interceptTouch="true" haptic="true">
+    <Triggers>
+      <Trigger action="up">
+        <VariableCommand name="cmd" expression="'REFRESH'" type="string" />
+        <FunctionCommand target="send" />
+      </Trigger>
+    </Triggers>
+    <Normal>
+      <Image src="tile.png" w="#view_width*0.27" h="#view_height*0.18" alpha="255" />
+      <Image src="refresh.webp" x="#view_width*0.135" y="#view_height*0.012"
+             align="center" w="#view_height*0.09" h="#view_height*0.09" />
+      <Text x="#view_width*0.135" y="#view_height*0.135" align="center" alignV="center"
+            text="刷新" size="7.5*#scale" color="#102634" />
+    </Normal>
+    <Pressed>
+      <Image src="tile.png" w="#view_width*0.27" h="#view_height*0.18" alpha="180" />
+      <Image src="refresh.webp" x="#view_width*0.135" y="#view_height*0.012"
+             align="center" w="#view_height*0.09" h="#view_height*0.09" />
+      <Text x="#view_width*0.135" y="#view_height*0.135" align="center" alignV="center"
+            text="刷新" size="7.5*#scale" color="#102634" />
+    </Pressed>
+  </Button>
+
+</Widget>
