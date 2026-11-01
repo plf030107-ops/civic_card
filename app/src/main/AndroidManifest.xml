@@ -9,6 +9,7 @@
 
     <queries>
         <package android:name="hk.uwu.reareye" />
+        <package android:name="com.ingeek.nokey" />
     </queries>
 
     <application
@@ -18,7 +19,7 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.NoActionBar">
 
-        <!-- 自检/配置页 -->
+        <!-- 配置页（桌面入口） -->
         <activity
             android:name=".ui.SettingsActivity"
             android:exported="true"
@@ -35,7 +36,7 @@
             android:exported="false"
             android:label="选择卡片状态" />
 
-        <!-- 卡片本体，供 REAREye 拉起 -->
+        <!-- 卡片本体：供 REAREye 拉起 -->
         <activity
             android:name=".ui.CardActivity"
             android:exported="true"
@@ -48,7 +49,28 @@
             </intent-filter>
         </activity>
 
-        <!-- Xposed 模块声明 -->
+        <!-- ============ REAREye 卡片声明 ============ -->
+        <!-- REAREye 扫描应用 meta-data 识别卡片，字段名与 RearWidgetBusinessSpec 对应 -->
+        <meta-data
+            android:name="reareye.widget.id"
+            android:value="hk.eta.civiccard.main" />
+        <meta-data
+            android:name="reareye.widget.name"
+            android:value="乘趣控车" />
+        <meta-data
+            android:name="reareye.widget.title"
+            android:value="我的思域" />
+        <meta-data
+            android:name="reareye.widget.version"
+            android:value="1" />
+        <meta-data
+            android:name="reareye.widget.priority"
+            android:value="0" />
+        <meta-data
+            android:name="reareye.widget.activity"
+            android:value="hk.eta.civiccard.ui.CardActivity" />
+
+        <!-- ============ Xposed 模块声明 ============ -->
         <meta-data
             android:name="xposedmodule"
             android:value="true" />
@@ -61,20 +83,6 @@
         <meta-data
             android:name="xposedsharedprefs"
             android:value="true" />
-
-        <!-- REAREye 卡片清单（供其扫描） -->
-        <meta-data
-            android:name="reareye.widget.id"
-            android:value="hk.eta.civiccard.main" />
-        <meta-data
-            android:name="reareye.widget.name"
-            android:value="乘趣控车" />
-        <meta-data
-            android:name="reareye.widget.title"
-            android:value="十代思域" />
-        <meta-data
-            android:name="reareye.widget.activity"
-            android:value="hk.eta.civiccard.ui.CardActivity" />
 
     </application>
 </manifest>
