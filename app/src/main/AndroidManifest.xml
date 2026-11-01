@@ -49,6 +49,16 @@
             </intent-filter>
         </activity>
 
+        <!-- ============ 背屏卡片桥 ============ -->
+        <!-- 接收 MAML 卡片的控制广播 -->
+        <receiver
+            android:name=".CardReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="hk.eta.civiccard.NATIVE_CONTROL" />
+            </intent-filter>
+        </receiver>
+
         <!-- ============ REAREye 卡片声明 ============ -->
         <!-- REAREye 扫描应用 meta-data 识别卡片，字段名与 RearWidgetBusinessSpec 对应 -->
         <meta-data
