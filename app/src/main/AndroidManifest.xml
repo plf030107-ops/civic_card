@@ -29,13 +29,18 @@
             </intent-filter>
         </activity>
 
+        <!-- 状态多选页 -->
+        <activity
+            android:name=".ui.StatusPickActivity"
+            android:exported="false"
+            android:label="选择卡片状态" />
+
         <!-- 卡片本体，供 REAREye 拉起 -->
         <activity
             android:name=".ui.CardActivity"
             android:exported="true"
             android:label="乘趣控车"
             android:launchMode="singleTask"
-            android:screenOrientation="landscape"
             android:resizeableActivity="true">
             <intent-filter>
                 <action android:name="hk.eta.civiccard.CARD" />
