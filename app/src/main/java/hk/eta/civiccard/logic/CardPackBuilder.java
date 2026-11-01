@@ -58,13 +58,29 @@ public final class CardPackBuilder {
         }
     }
 
-    /** 把卡片包复制到外部可访问位置，便于在 REAREye 里选择 */
+    /** 导出卡片包：先生成到私有目录，再尝试复制到外部；外部不可写则留在私有目录 */
     public static File exportToPublic(Context ctx) {
         File src = build(ctx);
-        if (src == null) return null;
+        if (src == null || !src.exists()) return null;
+
+        // 优先外部 Download
         File dir = new File("/storage/emulated/0/Download");
-        if (!dir.exists()) dir = ctx.getExternalFilesDir(null);
-        File dst = new File(dir, "乘趣控车卡片.zip");
+        if (dir.exists() && dir.canWrite()) {
+            File dst = new File(dir, "乘趣控车卡片.zip");
+            if (copy(src, dst)) return dst;
+        }
+
+        // 退回 App 外部私有目录（同样能被文件管理器访问）
+        File ext = ctx.getExternalFilesDir(null);
+        if (ext != null) {
+            File dst = new File(ext, "乘趣控车卡片.zip");
+            if (copy(src, dst)) return dst;
+        }
+
+        return src;
+    }
+
+    private static boolean copy(File src, File dst) {
         FileInputStream fis = null;
         FileOutputStream fos = null;
         try {
@@ -74,9 +90,9 @@ public final class CardPackBuilder {
             int n;
             while ((n = fis.read(buf)) > 0) fos.write(buf, 0, n);
             fos.flush();
-            return dst;
+            return true;
         } catch (Throwable t) {
-            return null;
+            return false;
         } finally {
             if (fis != null) try { fis.close(); } catch (IOException ignored) { }
             if (fos != null) try { fos.close(); } catch (IOException ignored) { }
