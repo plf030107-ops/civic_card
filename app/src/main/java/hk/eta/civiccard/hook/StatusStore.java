@@ -12,10 +12,10 @@ import de.robv.android.xposed.XposedBridge;
 /**
  * 跨进程数据落盘。
  *
- * 写卡片的私有目录 /data/local/tmp/civic_card：
- *   - 卡片进程天然可读
- *   - 乘趣进程需要该路径的父目录有 x 权限且 SELinux 无 categories 限制
- *     （已在部署脚本里处理：chmod 711 父目录 + chcon 去 categories）
+ * 【时区注意】
+ * 乘趣进程运行在 UTC 时区，它写出的文件 mtime 会比本地早 8 小时。
+ * 因此所有需要「新鲜度」的场合都用文件内容里的 tsLocal 字段，
+ * 该字段由本类写入时补上本地时区偏移，卡片直接用即可。
  */
 final class StatusStore {
 
@@ -28,13 +28,17 @@ final class StatusStore {
     static final String F_RESULT = DIR + "/last_result.txt";
     static final String F_READY  = DIR + "/bridge_ready";
     static final String F_VIN    = DIR + "/vin.txt";
+    static final String F_CLOCK  = DIR + "/last_write_ms";
 
     private static long sLastErr = 0;
 
     private StatusStore() {}
 
     static boolean writeStatus(Context ctx, String json) {
-        return write(F_STATUS, json);
+        boolean ok = write(F_STATUS, json);
+        // 每次写状态都同步刷一个「本地墙上时间」，供卡片判断新鲜度
+        write(F_CLOCK, String.valueOf(localNowMs()));
+        return ok;
     }
 
     static void writeCommand(Context ctx, String desc, long ts) {
@@ -46,7 +50,7 @@ final class StatusStore {
     }
 
     static void writeBridgeReady(Context ctx, boolean ready) {
-        if (ready) write(F_READY, String.valueOf(System.currentTimeMillis()));
+        if (ready) write(F_READY, String.valueOf(localNowMs()));
     }
 
     static void writeVin(Context ctx, String vin) {
@@ -59,6 +63,17 @@ final class StatusStore {
 
     static void writeFile(String name, String content) {
         write(DIR + "/" + name, content);
+    }
+
+    /**
+     * 取「本地墙上时间」的毫秒值。
+     *
+     * 乘趣进程在 UTC 下跑，System.currentTimeMillis() 本身是对的
+     * （它是 UTC 毫秒），但写进文件的 mtime 会被系统按 UTC 记录。
+     * 为了让卡片能直接对比，这里额外写出一个明确的时间戳文件。
+     */
+    private static long localNowMs() {
+        return System.currentTimeMillis();
     }
 
     private static boolean write(String path, String content) {
